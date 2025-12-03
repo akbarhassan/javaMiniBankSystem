@@ -11,30 +11,39 @@ import java.util.Base64;
 
 public class PasswordEncryptor {
 
-    public String encrypt(String plainPassword) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public String encrypt(String plainPassword) {
         if (plainPassword.isEmpty())
             throw new RuntimeException("Password should not be empty");
 
-        //generating salt
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
+        try {
+            SecureRandom random = new SecureRandom();
 
-        // initializing hasher PBKDF2
-        KeySpec spec = new PBEKeySpec(plainPassword.toCharArray(),
-                salt, 65536, 128);
+            // generate salt
+            byte[] salt = new byte[16];
+            random.nextBytes(salt);
 
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] hash = factory.generateSecret(spec).getEncoded();
+            // initializing hasher PBKDF2
+            KeySpec spec = new PBEKeySpec(plainPassword.toCharArray(),
+                    salt, 65536, 128);
 
-        String saltBase64 = Base64.getEncoder().encodeToString(salt);
-        String hashBase64 = Base64.getEncoder().encodeToString(hash);
-        return saltBase64 + ":" + hashBase64;
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] hash = factory.generateSecret(spec).getEncoded();
+
+            String saltBase64 = Base64.getEncoder().encodeToString(salt);
+            String hashBase64 = Base64.getEncoder().encodeToString(hash);
+            return saltBase64 + ":" + hashBase64;
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            // rethrow the correct exception
+            throw new RuntimeException("Password hashing failed", e);
+        } catch (Exception e) {
+            // wrap unexpected exceptions
+            throw new RuntimeException("Unexpected error encrypting password", e);
+        }
+
     }
 
 
-
-    public boolean compare(String plainPassword,String hashedPassword){
+    public boolean compare(String plainPassword, String hashedPassword) {
         try {
             String[] parts = hashedPassword.split(":");
             if (parts.length != 2) {
@@ -60,7 +69,7 @@ public class PasswordEncryptor {
 
             return Arrays.equals(storedHash, newHash);
 
-        }catch(Exception e){
+        } catch (Exception e) {
             return false;
         }
     }

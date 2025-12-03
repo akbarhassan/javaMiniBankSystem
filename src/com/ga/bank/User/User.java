@@ -1,5 +1,7 @@
 package com.ga.bank.User;
 
+import com.ga.bank.util.PasswordEncryptor;
+
 public abstract class User {
     private String fullName;
     private String email;
@@ -28,9 +30,9 @@ public abstract class User {
         return password;
     }
 
-    //    TODO: create password hasher and use it here
     public void setPassword(String password) {
-        this.password = password;
+        PasswordEncryptor encryptor = new PasswordEncryptor();
+        this.password = encryptor.encrypt(password);
     }
 
     public boolean isLoggedIn() {
