@@ -1,7 +1,11 @@
 package com.ga.bank.app;
+
 import com.ga.bank.util.PasswordEncryptor;
 import com.ga.bank.storage.FileDBWriter;
+import com.ga.bank.storage.FileDBReader;
 import com.ga.bank.User.Role;
+
+import java.io.File;
 import java.util.Scanner;
 
 public class TerminalUI {
@@ -15,11 +19,13 @@ public class TerminalUI {
 
             String selectedAction = scanner.nextLine();
 
-            switch (selectedAction){
+            switch (selectedAction) {
                 case "1":
                     login();
+                    break;
                 case "2":
                     register();
+                    break;
                 case "0":
                     System.out.println("Have a good day!");
                     running = false;
@@ -39,14 +45,15 @@ public class TerminalUI {
     }
 
 
-    private void login(){
+    private void login() {
         System.out.println("Enter your username");
         String userName = scanner.nextLine();
 
         System.out.println("Enter your password");
-        String plainPassowrd = scanner.nextLine();
+        String plainPassword = scanner.nextLine();
 
-
+        FileDBReader login = new FileDBReader();
+        if (login.authLogin(userName, plainPassword)) System.out.println("Login Successful");
 
     }
 
@@ -72,11 +79,19 @@ public class TerminalUI {
             return; // stop registration if hashing fails
         }
 
-        System.out.println("Hashed password: " + hashedPassword);
-
         FileDBWriter authRegister = new FileDBWriter();
-        authRegister.writeUserCredentials(userName,fullName,email,hashedPassword, String.valueOf(Role.CUSTOMER),false);
+        boolean fileIsCreated = authRegister.writeUserCredentials(userName, fullName, email, hashedPassword, String.valueOf(Role.CUSTOMER), false);
+        if (fileIsCreated) {
+            // Confirm immediately
+            File userFile = new File("data/users/" + userName + ".txt");
+            if (userFile.exists()) {
+                System.out.println("Account created successfully!");
+                System.out.println("File is immediately available at: " + userFile.getAbsolutePath());
+            } else {
+                System.out.println("Account created, but file is not visible yet (this shouldn't happen).");
+            }
+        }
+
+
     }
-
-
 }
