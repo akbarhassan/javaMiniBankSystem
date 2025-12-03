@@ -1,8 +1,7 @@
 package com.ga.bank.app;
 import com.ga.bank.util.PasswordEncryptor;
-
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import com.ga.bank.storage.FileDBWriter;
+import com.ga.bank.User.Role;
 import java.util.Scanner;
 
 public class TerminalUI {
@@ -40,9 +39,21 @@ public class TerminalUI {
     }
 
 
-    private void login(){}
+    private void login(){
+        System.out.println("Enter your username");
+        String userName = scanner.nextLine();
+
+        System.out.println("Enter your password");
+        String plainPassowrd = scanner.nextLine();
+
+
+
+    }
 
     private void register() {
+        System.out.println("Enter a username");
+        String userName = scanner.nextLine();
+
         System.out.println("Enter your full name");
         String fullName = scanner.nextLine();
 
@@ -62,7 +73,9 @@ public class TerminalUI {
         }
 
         System.out.println("Hashed password: " + hashedPassword);
-        // TODO: create customer file
+
+        FileDBWriter authRegister = new FileDBWriter();
+        authRegister.writeUserCredentials(userName,fullName,email,hashedPassword, String.valueOf(Role.CUSTOMER),false);
     }
 
 

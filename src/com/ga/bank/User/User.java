@@ -1,12 +1,22 @@
 package com.ga.bank.User;
 
 public abstract class User {
+
     private String fullName;
+    private String userName;
     private String email;
     private String password;
     private boolean isLoggedIn;
     private Role role;
     private boolean isLocked;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
     public String getFullName() {
         return fullName;
@@ -58,7 +68,8 @@ public abstract class User {
     }
 
 
-    public User(String fullName, String email, String password, Role role) {
+    public User(String userName, String fullName, String email, String password, Role role) {
+        this.userName=userName;
         this.fullName = fullName;
         this.email = email;
         this.password = password;
