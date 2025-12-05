@@ -8,7 +8,6 @@ import com.ga.bank.debitCards.CardType;
 import com.ga.bank.User.Role;
 
 import java.util.regex.*;
-import java.io.File;
 import java.util.Scanner;
 
 public class TerminalUI {

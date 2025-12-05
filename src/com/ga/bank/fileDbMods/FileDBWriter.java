@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 public class FileDBWriter {
 
     private final String folderPath = "data/users";
+    private final String accountsPath = "data/accounts";
 
     public FileDBWriter() {
         File folder = new File(folderPath);
@@ -135,11 +136,11 @@ public class FileDBWriter {
     ) {
         String accountId = GenerateAccountId(username);
 
-        String userAccountFile = folderPath + "/" + accountId + "-" + username + ".txt";
+        String userAccountFile = accountsPath + "/" + accountId + "-" + username + ".txt";
 
         File file = new File(userAccountFile);
 
-        if (!file.exists() || !file.isFile()) {
+        if (file.exists() || file.isFile()) {
             throw new RuntimeException("File already exists");
         }
 
@@ -174,4 +175,41 @@ public class FileDBWriter {
 
         return accountId;
     }
+
+
+    public void modifyAccountBalance(String accountId, String username, double balance) {
+        String userAccountFile = accountsPath + "/" + accountId + "-" + username + ".txt";
+
+        File file = new File(userAccountFile);
+
+        if (!file.exists() || !file.isFile()) {
+            throw new RuntimeException("File does not exist");
+        }
+
+        List<String> lines = new ArrayList<>();
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                lines.add(scanner.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + e.getMessage());
+        }
+
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).startsWith("balance:")) {
+                lines.set(i, "balance:" + balance);
+                break;
+            }
+        }
+        try(FileWriter writer = new FileWriter(file)) {
+            for (String line : lines) {
+                writer.write(line + "\n");
+            }
+            writer.flush();
+        } catch(IOException e){
+            System.out.println("Error updating user file: " + e.getMessage());
+        }
+
+    }
+
 }

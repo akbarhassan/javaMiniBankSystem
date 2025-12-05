@@ -9,14 +9,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Transactions implements Operations{
-    private Account accountId;
+    private String accountId;
     private CardType cardType;
 
-    public Account getAccountId() {
+    public String getAccountId() {
         return accountId;
     }
 
-    public Transactions(Account accountId, CardType cardType) {
+    public Transactions(String accountId, CardType cardType) {
         this.accountId = accountId;
         this.cardType = cardType;
     }

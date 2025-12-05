@@ -10,29 +10,47 @@ public class Account {
     private User user;
     private DebitCard debitCard;
     private int overDraft;
+    Transactions transactions;
+
+    public Account(String accountId, double balance, boolean isActive, User user, DebitCard debitCard, int overDraft) {
+        this.accountId = accountId;
+        this.balance = balance;
+        this.isActive = isActive;
+        this.user = user;
+        this.debitCard = debitCard;
+        this.overDraft = overDraft;
+        transactions = new Transactions(this.accountId,this.debitCard.getCardType());
+    }
 
     public int getOverDraft() {
         return overDraft;
     }
 
     public void setOverDraft(int overDraft) {
-        this.overDraft = overDraft;
+        if (overDraft < 2) {
+            this.overDraft = overDraft;
+        } else {
+            this.overDraft = overDraft;
+            // TODO: un activate the account
+        }
     }
 
     public String getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
-    }
-
     public Double getBalance() {
         return balance;
     }
 
-    public void setBalance(Double balance) {
-        this.balance = balance;
+    public void setBalance(double amount) {
+        if (getOverDraft() >= 2) {
+            if (amount >= balance) {
+                //TODO: reset overdraft unlock account
+            }
+
+        }
+        this.balance = this.balance + amount;
     }
 
     public boolean isActive() {
@@ -57,6 +75,18 @@ public class Account {
 
     public void setDebitCard(DebitCard debitCard) {
         this.debitCard = debitCard;
+    }
+
+    public void deposit(double amount, DebitCard debitCard, String toAccountId) {
+        //TODO: modify the transaction record or create a new 1 if not exist
+        //TODO: check if to own account
+        //TODO: check deposited from account get date etc and check if he still have limit
+
+        setBalance(amount);
+        transactions.deposit(getBalance(),getDebitCard());
+
+
+
     }
 
 }
