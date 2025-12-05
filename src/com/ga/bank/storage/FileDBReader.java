@@ -47,6 +47,8 @@ public class FileDBReader {
             writer.increaseLoginCounter(counter, userName);
             return false;
         }
-        return true;
-    }
+
+        FileDBWriter writer = new FileDBWriter();
+        writer.resetCounter(userName);
+        return true;    }
 }

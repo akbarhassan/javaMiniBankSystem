@@ -88,4 +88,39 @@ public class FileDBWriter {
         }
 
     }
+
+
+    public void resetCounter(String username) {
+        int counter = 0;
+        String userFile = folderPath + "/" + username + ".txt";
+        File file = new File(userFile);
+
+        if (!file.exists() || !file.isFile()) {
+            throw new RuntimeException("File does not exist");
+        }
+        List<String> lines = new ArrayList<>();
+
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                lines.add(scanner.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + e.getMessage());
+        }
+
+        lines.set(lines.size() - 2, "loginAttempt:" + counter);
+        lines.set(lines.size() - 1, "Locked:false");
+        System.out.println("User attempts has been reset.");
+
+
+        try (FileWriter writer = new FileWriter(file)) {
+            for (String line : lines) {
+                writer.write(line + "\n");
+            }
+            writer.flush();
+        } catch (IOException e) {
+            System.out.println("Error updating user file: " + e.getMessage());
+        }
+    }
+
 }
