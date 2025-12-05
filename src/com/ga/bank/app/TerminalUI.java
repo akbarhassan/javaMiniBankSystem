@@ -4,7 +4,7 @@ import com.ga.bank.util.PasswordEncryptor;
 import com.ga.bank.storage.FileDBWriter;
 import com.ga.bank.storage.FileDBReader;
 import com.ga.bank.User.Role;
-
+import java.util.regex.*;
 import java.io.File;
 import java.util.Scanner;
 
@@ -66,6 +66,14 @@ public class TerminalUI {
 
         System.out.println("Enter your email");
         String email = scanner.nextLine();
+
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        boolean verifiedEmail = email != null && pattern.matcher(email).matches();
+
+        if(!verifiedEmail) {
+            return;
+        }
 
         System.out.println("Enter your password");
         String plainPassword = scanner.nextLine();
