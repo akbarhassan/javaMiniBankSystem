@@ -77,13 +77,13 @@ public class Account {
         this.debitCard = debitCard;
     }
 
-    public void deposit(double amount, DebitCard debitCard, String toAccountId) {
+    public void deposit(double amount) {
         //TODO: modify the transaction record or create a new 1 if not exist
         //TODO: check if to own account
         //TODO: check deposited from account get date etc and check if he still have limit
-
-        setBalance(amount);
-        transactions.deposit(getBalance(),getDebitCard());
+        System.out.println("Current Balance: " + getBalance());
+//        setBalance(amount);
+//        transactions.deposit(getBalance(),getDebitCard());
 
 
 

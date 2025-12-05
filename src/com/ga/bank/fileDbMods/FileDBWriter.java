@@ -134,7 +134,7 @@ public class FileDBWriter {
             boolean isActive
 
     ) {
-        String accountId = GenerateAccountId(username);
+        String accountId = generateAccountId(username);
 
         String userAccountFile = accountsPath + "/" + accountId + "-" + username + ".txt";
 
@@ -151,7 +151,8 @@ public class FileDBWriter {
                     "cardType:" + cardType.name() + "\n" +
                     "balance:" + balance + "\n" +
                     "overdraft:" + overdraft + "\n" +
-                    "Locked:" + isActive;
+                    "Locked:" + isActive + "\n" +
+                    "CardNumber:" + generateSimpleCardNumber(accountId);
 
             writer.write(credentials);
             writer.flush();
@@ -163,7 +164,7 @@ public class FileDBWriter {
 
     }
 
-    private String GenerateAccountId(String username) {
+    private String generateAccountId(String username) {
         String accountId;
         File file;
 
@@ -174,6 +175,20 @@ public class FileDBWriter {
         } while (file.exists());
 
         return accountId;
+    }
+
+    public static String generateSimpleCardNumber(String accountId) {
+        StringBuilder sb = new StringBuilder();
+
+        // use userId first (padded to ensure fixed length)
+        sb.append(String.format("%06d", Integer.parseInt(accountId))); // 6-digit user id
+
+        // add random numbers to reach 16 digits
+        for (int i = sb.length(); i < 16; i++) {
+            sb.append((int) (Math.random() * 10));
+        }
+
+        return sb.toString();
     }
 
 
@@ -201,12 +216,12 @@ public class FileDBWriter {
                 break;
             }
         }
-        try(FileWriter writer = new FileWriter(file)) {
+        try (FileWriter writer = new FileWriter(file)) {
             for (String line : lines) {
                 writer.write(line + "\n");
             }
             writer.flush();
-        } catch(IOException e){
+        } catch (IOException e) {
             System.out.println("Error updating user file: " + e.getMessage());
         }
 

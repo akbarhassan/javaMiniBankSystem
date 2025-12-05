@@ -4,19 +4,20 @@ public class DebitCard {
     private CardType cardType;
     private String cardNumber;
 
+    public DebitCard(CardType cardType, String cardNumber) {
+        this.cardType = cardType;
+        this.cardNumber = cardNumber;
+    }
+
+
     public String getCardNumber() {
         return cardNumber;
     }
 
-    public void setCardNumber(String cardNumber) {
-        this.cardNumber = cardNumber;
-    }
 
     public CardType getCardType() {
         return cardType;
     }
 
-    public void setCardType(CardType cardType) {
-        this.cardType = cardType;
-    }
+
 }

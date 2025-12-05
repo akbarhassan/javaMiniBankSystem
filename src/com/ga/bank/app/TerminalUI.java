@@ -1,5 +1,8 @@
 package com.ga.bank.app;
 
+import com.ga.bank.User.Customer;
+import com.ga.bank.User.User;
+import com.ga.bank.account.Account;
 import com.ga.bank.util.PasswordEncryptor;
 import com.ga.bank.fileDbMods.FileDBWriter;
 import com.ga.bank.fileDbMods.FileDBReader;
@@ -7,11 +10,15 @@ import com.ga.bank.debitCards.CardType;
 
 import com.ga.bank.User.Role;
 
+import java.util.List;
 import java.util.regex.*;
 import java.util.Scanner;
 
 public class TerminalUI {
     private Scanner scanner = new Scanner(System.in);
+    private User currentUser;
+    private Account currentAccount;
+    private List<String> accountList;
 
     public void start() {
         boolean running = true;
@@ -24,7 +31,9 @@ public class TerminalUI {
             switch (selectedAction) {
                 case "1":
                     if (login()) {
-                        operations();
+                        if (currentUser instanceof Customer) {
+                            operations();
+                        }
                     }
                     break;
                 case "2":
@@ -59,6 +68,12 @@ public class TerminalUI {
         FileDBReader login = new FileDBReader();
         if (login.authLogin(userName, plainPassword)) {
             System.out.println("Login Successful");
+            //todo: pick user data
+            currentUser = login.getCurrentUser(userName);
+            accountList = login.userAccounts(userName);
+            String userAccountId = setAccountId();
+            currentAccount = login.getCurrentUserAccount(userName, userAccountId, currentUser);
+
             return true;
         } else {
             System.out.println("Invalid credentials");
@@ -143,6 +158,8 @@ public class TerminalUI {
 
     public void operations() {
         boolean loggedIn = true;
+        //TODO: create User Object here?
+        //TODO: create account object here?
 
         while (loggedIn) {
             System.out.println("\n=== Available Operations ===");
@@ -180,4 +197,26 @@ public class TerminalUI {
         System.out.println("0. Exit");
     }
 
+    public String setAccountId() {
+        System.out.println("Select Which Account you want to use for the operations");
+
+        for (int i = 0; i < accountList.size(); i++) {
+            System.out.println((i + 1) + ". Account ID: " + accountList.get(i));
+        }
+
+        while (true) {
+            System.out.print("Enter your choice (1-" + accountList.size() + "): ");
+            String input = scanner.nextLine();
+
+            try {
+                int choice = Integer.parseInt(input);
+                if (choice >= 1 && choice <= accountList.size()) {
+                    return accountList.get(choice - 1);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+
+            System.out.println("Invalid choice. Try again.");
+        }
+    }
 }
