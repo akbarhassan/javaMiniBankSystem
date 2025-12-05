@@ -1,9 +1,12 @@
 package com.ga.bank.app;
 
 import com.ga.bank.util.PasswordEncryptor;
-import com.ga.bank.storage.FileDBWriter;
-import com.ga.bank.storage.FileDBReader;
+import com.ga.bank.fileDbMods.FileDBWriter;
+import com.ga.bank.fileDbMods.FileDBReader;
+import com.ga.bank.debitCards.CardType;
+
 import com.ga.bank.User.Role;
+
 import java.util.regex.*;
 import java.io.File;
 import java.util.Scanner;
@@ -71,7 +74,7 @@ public class TerminalUI {
         Pattern pattern = Pattern.compile(emailRegex);
         boolean verifiedEmail = email != null && pattern.matcher(email).matches();
 
-        if(!verifiedEmail) {
+        if (!verifiedEmail) {
             return;
         }
 
@@ -86,15 +89,45 @@ public class TerminalUI {
             System.out.println("Error encrypting password: " + e.getMessage());
             return; // stop registration if hashing fails
         }
+        System.out.println("Select Card Type: by entering 1 or 2 or 3");
+        int i = 1;
+        for (CardType type : CardType.values()) {
+            System.out.println(i + ". " + type);
+            i++;
+        }
+        System.out.print("Your choice: ");
+        String input = scanner.nextLine();
+        if (!input.matches("[1-3]")) {
+            System.out.println("Invalid choice!");
+            return; // or ask again
+        }
+        CardType cardType = CardType.values()[Integer.parseInt(input) - 1];
+
+        System.out.println("Enter your balance");
+        String balanceInput = scanner.nextLine();
+
+        double balance;
+
+        try {
+            balance = Double.parseDouble(balanceInput);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid balance! Must be a number.");
+            return; // or loop again
+        }
 
         FileDBWriter authRegister = new FileDBWriter();
         boolean fileIsCreated = authRegister.writeUserCredentials(userName, fullName, email, hashedPassword, String.valueOf(Role.CUSTOMER), false);
         if (fileIsCreated) {
+            boolean createAccount = authRegister.writeUserAccount(
+                    userName,
+                    cardType,
+                    balance,
+                    0
+                    , true
+            );
             // Confirm immediately
-            File userFile = new File("data/users/" + userName + ".txt");
-            if (userFile.exists()) {
+            if (createAccount) {
                 System.out.println("Account created successfully!");
-                System.out.println("File is immediately available at: " + userFile.getAbsolutePath());
             } else {
                 System.out.println("Account created, but file is not visible yet (this shouldn't happen).");
             }

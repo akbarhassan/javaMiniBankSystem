@@ -1,4 +1,4 @@
-package com.ga.bank.storage;
+package com.ga.bank.fileDbMods;
 
 import com.ga.bank.util.PasswordEncryptor;
 

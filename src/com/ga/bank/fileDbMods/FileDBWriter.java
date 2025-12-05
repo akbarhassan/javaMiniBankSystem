@@ -1,4 +1,6 @@
-package com.ga.bank.storage;
+package com.ga.bank.fileDbMods;
+
+import com.ga.bank.debitCards.CardType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,7 +44,6 @@ public class FileDBWriter {
                     "Role:" + role + "\n" +
                     "loginAttempt:" + 0 + "\n" +
                     "Locked:" + isLocked;
-
 
             writer.write(credentials);
             writer.flush();
@@ -123,4 +124,54 @@ public class FileDBWriter {
         }
     }
 
+
+    public boolean writeUserAccount(
+            String username,
+            CardType cardType,
+            double balance,
+            int overdraft,
+            boolean isActive
+
+    ) {
+        String accountId = GenerateAccountId(username);
+
+        String userAccountFile = folderPath + "/" + accountId + "-" + username + ".txt";
+
+        File file = new File(userAccountFile);
+
+        if (!file.exists() || !file.isFile()) {
+            throw new RuntimeException("File already exists");
+        }
+
+        try (FileWriter writer = new FileWriter(userAccountFile)) {
+
+            String credentials = "Username:" + username + "\n" +
+                    "accountId:" + accountId + "\n" +
+                    "cardType:" + cardType.name() + "\n" +
+                    "balance:" + balance + "\n" +
+                    "overdraft:" + overdraft + "\n" +
+                    "Locked:" + isActive;
+
+            writer.write(credentials);
+            writer.flush();
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error writing user file: " + e.getMessage());
+            return false;
+        }
+
+    }
+
+    private String GenerateAccountId(String username) {
+        String accountId;
+        File file;
+
+        do {
+            // random 6-digit ID
+            accountId = String.valueOf((int) (Math.random() * 900000) + 100000);
+            file = new File(folderPath + "/" + accountId + "-" + username + ".txt");
+        } while (file.exists());
+
+        return accountId;
+    }
 }

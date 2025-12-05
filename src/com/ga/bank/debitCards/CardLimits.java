@@ -5,40 +5,40 @@ import java.util.Map;
 
 public class CardLimits {
 
-    private static final Map<Operations, Map<CardType, Integer>> limits = new HashMap<>();
+    private static final Map<Operations, Map<CardType, Double>> limits = new HashMap<>();
 
     static {
 
         // WithdrawLimitPerDay
-        Map<CardType, Integer> withdrawLimits = new HashMap<>();
-        withdrawLimits.put(CardType.Platinum, 20000);
-        withdrawLimits.put(CardType.Titanium, 10000);
-        withdrawLimits.put(CardType.Mastercard, 5000);
+        Map<CardType, Double> withdrawLimits = new HashMap<>();
+        withdrawLimits.put(CardType.Platinum, 20_000d);
+        withdrawLimits.put(CardType.Titanium, 10_000d);
+        withdrawLimits.put(CardType.Mastercard, 5_000d);
         limits.put(Operations.WithdrawLimitPerDay, withdrawLimits);
 
         // TransferLimitPerDayOwnAccount
-        Map<CardType, Integer> transferOwnLimits = new HashMap<>();
-        transferOwnLimits.put(CardType.Platinum, 80000);
-        transferOwnLimits.put(CardType.Titanium, 40000);
-        transferOwnLimits.put(CardType.Mastercard, 20000);
+        Map<CardType, Double> transferOwnLimits = new HashMap<>();
+        transferOwnLimits.put(CardType.Platinum, 80_000d);
+        transferOwnLimits.put(CardType.Titanium, 40_000d);
+        transferOwnLimits.put(CardType.Mastercard, 20_000d);
         limits.put(Operations.TransferLimitPerDayOwnAccount, transferOwnLimits);
 
         // DepositLimitPerDay
-        Map<CardType, Integer> depositLimits = new HashMap<>();
-        depositLimits.put(CardType.Platinum, 100000);
-        depositLimits.put(CardType.Titanium, 100000);
-        depositLimits.put(CardType.Mastercard, 100000);
+        Map<CardType, Double> depositLimits = new HashMap<>();
+        depositLimits.put(CardType.Platinum, 100_000d);
+        depositLimits.put(CardType.Titanium, 100_000d);
+        depositLimits.put(CardType.Mastercard, 100_000d);
         limits.put(Operations.DepositLimitPerDay, depositLimits);
 
         // DepositLimitPerDayOwnAccount
-        Map<CardType, Integer> depositOwnLimits = new HashMap<>();
-        depositOwnLimits.put(CardType.Platinum, 200000);
-        depositOwnLimits.put(CardType.Titanium, 200000);
-        depositOwnLimits.put(CardType.Mastercard, 200000);
+        Map<CardType, Double> depositOwnLimits = new HashMap<>();
+        depositOwnLimits.put(CardType.Platinum, 200_000d);
+        depositOwnLimits.put(CardType.Titanium, 200_000d);
+        depositOwnLimits.put(CardType.Mastercard, 200_000d);
         limits.put(Operations.DepositLimitPerDayOwnAccount, depositOwnLimits);
     }
 
-    public static int getLimit(Operations op, CardType type) {
+    public static Double getLimit(Operations op, CardType type) {
         return limits.get(op).get(type);
     }
 }

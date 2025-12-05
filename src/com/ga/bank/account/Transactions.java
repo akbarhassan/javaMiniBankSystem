@@ -1,58 +1,34 @@
 package com.ga.bank.account;
 
 import com.ga.bank.User.User;
+import com.ga.bank.debitCards.CardType;
 import com.ga.bank.debitCards.DebitCard;
+import com.ga.bank.debitCards.CardLimits;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Transactions implements Operations{
-    private String accountId;
-    private User user;
-    private double balance;
-    private boolean isActive;
-    private DebitCard debitCard;
+    private Account accountId;
+    private CardType cardType;
 
-    public String getAccountId() {
+    public Account getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(String accountId) {
+    public Transactions(Account accountId, CardType cardType) {
         this.accountId = accountId;
+        this.cardType = cardType;
     }
 
-    public User getUser() {
-        return user;
+    public CardType getCardType() {
+        return cardType;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public double getBalance() {
-        return balance;
-    }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public DebitCard getDebitCard() {
-        return debitCard;
-    }
-
-    public void setDebitCard(DebitCard debitCard) {
-        this.debitCard = debitCard;
-    }
 
 
     public void deposit(double amount, DebitCard debitCard) {
-
+        //TODO: modify the transaction record
     }
 
     public void withdraw(double amount, DebitCard debitCard) {
