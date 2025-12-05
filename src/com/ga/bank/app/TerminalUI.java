@@ -23,7 +23,9 @@ public class TerminalUI {
 
             switch (selectedAction) {
                 case "1":
-                    login();
+                    if (login()) {
+                        operations();
+                    }
                     break;
                 case "2":
                     register();
@@ -47,7 +49,7 @@ public class TerminalUI {
     }
 
 
-    private void login() {
+    private boolean login() {
         System.out.println("Enter your username");
         String userName = scanner.nextLine();
 
@@ -55,9 +57,15 @@ public class TerminalUI {
         String plainPassword = scanner.nextLine();
 
         FileDBReader login = new FileDBReader();
-        if (login.authLogin(userName, plainPassword)) System.out.println("Login Successful");
-
+        if (login.authLogin(userName, plainPassword)) {
+            System.out.println("Login Successful");
+            return true;
+        } else {
+            System.out.println("Invalid credentials");
+            return false;
+        }
     }
+
 
     private void register() {
         System.out.println("Enter a username");
@@ -131,7 +139,45 @@ public class TerminalUI {
                 System.out.println("Account created, but file is not visible yet (this shouldn't happen).");
             }
         }
-
-
     }
+
+    public void operations() {
+        boolean loggedIn = true;
+
+        while (loggedIn) {
+            System.out.println("\n=== Available Operations ===");
+            showOperations();
+            String operation = scanner.nextLine();
+
+            switch (operation) {
+                case "1":
+                    System.out.println("Deposit selected");
+                    // TODO: deposit logic
+                    break;
+                case "2":
+                    System.out.println("Withdraw selected");
+                    // TODO: withdraw logic
+                    break;
+                case "3":
+                    System.out.println("Transfer selected");
+                    // TODO: transfer logic
+                    break;
+                case "0":
+                    System.out.println("Logging out...");
+                    loggedIn = false; // exit operations loop
+                    break;
+                default:
+                    System.out.println("Choose a valid operation");
+            }
+        }
+    }
+
+    private void showOperations() {
+        System.out.println("Select operation: ");
+        System.out.println("1. Deposit");
+        System.out.println("2. Withdraw");
+        System.out.println("3. Transfer");
+        System.out.println("0. Exit");
+    }
+
 }
