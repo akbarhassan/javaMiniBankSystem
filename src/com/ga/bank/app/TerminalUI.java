@@ -171,13 +171,17 @@ public class TerminalUI {
                 case "1":
                     System.out.println("Deposit selected");
                     // TODO: deposit logic
-                    double amount = getDeposit();
+                    double amount = getDeposit("Deposit");
                     currentAccount.deposit(amount, null);
 
                     break;
                 case "2":
                     System.out.println("Withdraw selected");
                     // TODO: withdraw logic
+                    double amount1 = getDeposit("Withdraw");
+                    currentAccount.withdraw(amount1);
+
+
                     break;
                 case "3":
                     System.out.println("Transfer selected");
@@ -230,8 +234,8 @@ public class TerminalUI {
         }
     }
 
-    public double getDeposit() {
-        System.out.print("Amount to deposit: ");
+    public double getDeposit(String operation) {
+        System.out.print("Amount to : " + operation + ": ");
         double deposit = 0;
         boolean verifyDeposit = true;
 

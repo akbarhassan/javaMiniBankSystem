@@ -101,6 +101,16 @@ public class Account {
 
 
     public void deposit(double amount, String toAccount) {
+        if (!isActive) {
+            System.out.println("Account is blocked overdraft reached, balance is negative");
+            System.out.println("Contact the banker to top up until positive balance to reset");
+            return;
+        }
+
+        if (getBalance() < 0 && getBalance() + amount > 0) {
+            setActive(true);
+            setOverDraft(0);
+        }
         double cardLimit = 0d;
         double depositTransactionsAmount = fileDBReader.getDailyLimit(
                 user.getUserName(),
@@ -124,22 +134,38 @@ public class Account {
             return;
         }
 
-        if (amount >= cardLimit) {
-            System.out.println("The limit is for this day, try again tomorrow");
+        if (amount > cardLimit) {
+            System.out.println("The limit of deposit is hit for this day, try again tomorrow");
             return;
         }
 
         setBalance(amount, toAccount, OperationType.DEPOSIT);
         System.out.println("Current Balance: " + getBalance());
-
-        //TODO: balance is negative and amount is more reset overdraft
-
     }
 
     public void withdraw(double amount) {
+        if (!isActive) {
+            System.out.println("Account is blocked overdraft reached, balance is negative");
+            return;
+        }
 
         if (amount <= 0) {
             System.out.println("Amount must be greater than zero");
+            return;
+        }
+
+        double cardLimit = 0d;
+        double withdrawTransactionsAmount = fileDBReader.getDailyLimit(
+                user.getUserName(),
+                getAccountId(),
+                OperationType.WITHDRAW
+        );
+        cardLimit = CardLimits.getLimit(Operations.WithdrawLimitPerDay, debitCard.getCardType());
+
+        cardLimit -= withdrawTransactionsAmount;
+
+        if (amount > cardLimit) {
+            System.out.println("The limit of withdraw is  for this day, try again tomorrow");
             return;
         }
 
@@ -168,6 +194,7 @@ public class Account {
             setOverDraft(0);
             setActive(true);
         }
+        System.out.printf("Amount Withdrawn Successfully %f", amount);
     }
 
 
