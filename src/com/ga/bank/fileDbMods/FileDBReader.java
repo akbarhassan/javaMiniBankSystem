@@ -232,5 +232,8 @@ public class FileDBReader {
 
         return 0d;
     }
+    //TODO: get all users accounts except current user accounts for transfer
+    //TODO: get all current user accounts for transfer to own account
+    //TODO: future work, add account type saving or not
 
 }
