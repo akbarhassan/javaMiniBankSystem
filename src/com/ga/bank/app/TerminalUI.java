@@ -147,6 +147,7 @@ public class TerminalUI {
                     0
                     , true
             );
+
             // Confirm immediately
             if (createAccount) {
                 System.out.println("Account created successfully!");
@@ -170,6 +171,9 @@ public class TerminalUI {
                 case "1":
                     System.out.println("Deposit selected");
                     // TODO: deposit logic
+                    double amount = getDeposit();
+                    currentAccount.deposit(amount, null);
+
                     break;
                 case "2":
                     System.out.println("Withdraw selected");
@@ -177,6 +181,11 @@ public class TerminalUI {
                     break;
                 case "3":
                     System.out.println("Transfer selected");
+                    // TODO: transfer logic
+                    break;
+                case "4":
+                    System.out.println("Show current balance selected");
+                    System.out.println("Current Balance: " + currentAccount.getBalance());
                     // TODO: transfer logic
                     break;
                 case "0":
@@ -194,6 +203,7 @@ public class TerminalUI {
         System.out.println("1. Deposit");
         System.out.println("2. Withdraw");
         System.out.println("3. Transfer");
+        System.out.println("4. Show current balance");
         System.out.println("0. Exit");
     }
 
@@ -219,4 +229,27 @@ public class TerminalUI {
             System.out.println("Invalid choice. Try again.");
         }
     }
+
+    public double getDeposit() {
+        System.out.print("Amount to deposit: ");
+        double deposit = 0;
+        boolean verifyDeposit = true;
+
+        while (verifyDeposit) {
+            String input = scanner.nextLine();
+            try {
+                deposit = Double.parseDouble(input);
+                if (deposit <= 0) {
+                    System.out.print("Amount must be greater than 0. Try again: ");
+                } else {
+                    verifyDeposit = false; // valid input, exit loop
+                }
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input! Please enter a number: ");
+            }
+        }
+
+        return deposit;
+    }
+
 }

@@ -1,10 +1,14 @@
 package com.ga.bank.fileDbMods;
 
+import com.ga.bank.account.OperationType;
 import com.ga.bank.debitCards.CardType;
+import com.ga.bank.debitCards.Operations;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -14,6 +18,7 @@ public class FileDBWriter {
 
     private final String folderPath = "data/users";
     private final String accountsPath = "data/accounts";
+    private final String transactionsPath = "data/transactions";
 
     public FileDBWriter() {
         File folder = new File(folderPath);
@@ -156,6 +161,7 @@ public class FileDBWriter {
 
             writer.write(credentials);
             writer.flush();
+            createTransactionsFile(username, accountId);
             return true;
         } catch (IOException e) {
             System.out.println("Error writing user file: " + e.getMessage());
@@ -227,4 +233,80 @@ public class FileDBWriter {
 
     }
 
+
+    public void createTransactionsFile(String userName, String accountId) {
+        // Path: data/transactions/{accountId}-{userName}.txt
+        String filePath = transactionsPath + "/" + accountId + "-" + userName + ".txt";
+
+        File file = new File(filePath);
+
+        // Create the transactions folder if it doesn't exist
+        File folder = new File(transactionsPath);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
+        if (!file.exists()) {
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(""); // empty file
+                System.out.println("Transaction file created for account: " + accountId);
+            } catch (IOException e) {
+                System.out.println("Error creating transactions file: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Transaction file already exists for account: " + accountId);
+        }
+    }
+
+    public void createTransaction(
+            String userName,
+            String accountId,
+            OperationType operation,
+            String toAccountId,
+            double amount,
+            double balance
+    ) {
+        String filePath = transactionsPath + "/" + accountId + "-" + userName + ".txt";
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String dateTime = now.format(formatter);
+
+        int id = 1;
+
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) {
+            throw new RuntimeException("File does not exist");
+        }
+
+        List<String> lines = new ArrayList<>();
+        try (Scanner scanner = new Scanner(file)) {
+            String lastNonEmptyLine = null;
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (!line.isEmpty()) {
+                    lastNonEmptyLine = line;
+                }
+            }
+            if (lastNonEmptyLine != null) {
+                String[] parts = lastNonEmptyLine.split(",", 2); // ID is the first part
+                try {
+                    id = Integer.parseInt(parts[0].trim()) + 1;
+                } catch (NumberFormatException e) {
+                    id++;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + e.getMessage());
+            return;
+        }
+        String record = id + "," + dateTime + "," + operation + "," + toAccountId + "," + amount + "," + balance;
+        try (FileWriter writer = new FileWriter(file, true)) { // append mode
+            writer.write(record + "\n");
+            writer.flush();
+        } catch (IOException e) {
+            System.out.println("Error writing transaction: " + e.getMessage());
+        }
+
+    }
 }
