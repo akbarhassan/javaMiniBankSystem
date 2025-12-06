@@ -2,7 +2,6 @@ package com.ga.bank.account;
 
 import com.ga.bank.User.User;
 import com.ga.bank.debitCards.CardLimits;
-import com.ga.bank.debitCards.CardType;
 import com.ga.bank.debitCards.DebitCard;
 import com.ga.bank.debitCards.Operations;
 import com.ga.bank.fileDbMods.FileDBWriter;
@@ -18,6 +17,7 @@ public class Account {
     Transactions transactions;
     FileDBWriter fileDBWriter = new FileDBWriter();
     FileDBReader fileDBReader = new FileDBReader();
+    Operations operations;
 
     public Account(String accountId, double balance, boolean isActive, User user, DebitCard debitCard, int overDraft) {
         this.accountId = accountId;
@@ -36,8 +36,22 @@ public class Account {
     public void setOverDraft(int overDraft) {
         if (overDraft >= 2) {
             //TODO: deactivate the account
-            this.overDraft = overDraft;
+            setActive(false);
+            fileDBWriter.modifyAccountOverDraft(
+                    getAccountId(),
+                    user.getUserName(),
+                    2,
+                    false
+            );
+            return;
         }
+        this.overDraft = overDraft;
+        fileDBWriter.modifyAccountOverDraft(
+                getAccountId(),
+                user.getUserName(),
+                overDraft,
+                true
+        );
     }
 
     public String getAccountId() {
@@ -48,20 +62,32 @@ public class Account {
         return balance;
     }
 
-    public void setBalance(double amount, String toAccount) {
+    public void setBalance(double amount, String toAccount, OperationType operationType) {
         double postBalance = this.balance;
         this.balance = this.balance + amount;
         fileDBWriter.modifyAccountBalance(getAccountId(), user.getUserName(), this.balance);
-        transactions.deposit(
-                amount,
-                debitCard,
-                this,
-                toAccount,
-                postBalance
-        );
+        if (toAccount == null) {
+            toAccount = getAccountId();
+        }
+        if (operationType == OperationType.DEPOSIT) {
+            transactions.deposit(
+                    amount,
+                    debitCard,
+                    this,
+                    toAccount,
+                    postBalance
+            );
+        } else if (operationType == OperationType.WITHDRAW) {
+            transactions.withdraw(
+                    amount,
+                    debitCard,
+                    this,
+                    toAccount,
+                    postBalance);
+        }
     }
 
-    public boolean isActive() {
+    public boolean getActive() {
         return isActive;
     }
 
@@ -73,17 +99,6 @@ public class Account {
         return user;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public DebitCard getDebitCard() {
-        return debitCard;
-    }
-
-    public void setDebitCard(DebitCard debitCard) {
-        this.debitCard = debitCard;
-    }
 
     public void deposit(double amount, String toAccount) {
         double cardLimit = 0d;
@@ -114,12 +129,46 @@ public class Account {
             return;
         }
 
-
-        System.out.println("card limit = " + cardLimit);
-
-        setBalance(amount, toAccount);
+        setBalance(amount, toAccount, OperationType.DEPOSIT);
         System.out.println("Current Balance: " + getBalance());
 
+        //TODO: balance is negative and amount is more reset overdraft
+
     }
+
+    public void withdraw(double amount) {
+
+        if (amount <= 0) {
+            System.out.println("Amount must be greater than zero");
+            return;
+        }
+
+        double balance = getBalance();
+        if (amount > balance) {
+            if (getOverDraft() + 1 >= 2) {
+                System.out.println("Overdraft limit reached! Maximum allowed overdraft attempts is 2.");
+
+                if (amount > 100) {
+                    amount = 100;
+                }
+
+                setBalance(-amount, getAccountId(), OperationType.WITHDRAW);
+                setActive(false);
+                setOverDraft(getOverDraft() + 1);
+                return;
+            }
+            System.out.println("Using overdraft.");
+            setOverDraft(getOverDraft() + 1);
+            setBalance(-amount, getAccountId(), OperationType.WITHDRAW);
+            return;
+        }
+
+        setBalance(-amount, getAccountId(), OperationType.WITHDRAW);
+        if (getOverDraft() != 0) {
+            setOverDraft(0);
+            setActive(true);
+        }
+    }
+
 
 }

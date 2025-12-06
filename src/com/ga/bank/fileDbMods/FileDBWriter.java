@@ -156,7 +156,7 @@ public class FileDBWriter {
                     "cardType:" + cardType.name() + "\n" +
                     "balance:" + balance + "\n" +
                     "overdraft:" + overdraft + "\n" +
-                    "Locked:" + isActive + "\n" +
+                    "isActive:" + isActive + "\n" +
                     "CardNumber:" + generateSimpleCardNumber(accountId);
 
             writer.write(credentials);
@@ -276,7 +276,7 @@ public class FileDBWriter {
 
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
-            throw new RuntimeException("File does not exist");
+            createTransactionsFile(userName, accountId);
         }
 
         List<String> lines = new ArrayList<>();
@@ -307,5 +307,42 @@ public class FileDBWriter {
         } catch (IOException e) {
             System.out.println("Error writing transaction: " + e.getMessage());
         }
+    }
+
+    public void modifyAccountOverDraft(String accountId, String username, int overdraft, boolean isActive) {
+        String userAccountFile = accountsPath + "/" + accountId + "-" + username + ".txt";
+        File file = new File(userAccountFile);
+
+        if (!file.exists() || !file.isFile()) {
+            throw new RuntimeException("File does not exist");
+        }
+
+        List<String> lines = new ArrayList<>();
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                lines.add(scanner.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + e.getMessage());
+        }
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).toLowerCase();
+            if (line.startsWith("overdraft:")) {
+                lines.set(i, "overdraft:" + overdraft);
+            } else if (line.startsWith("isactive:")) {
+                lines.set(i, "isActive:" + isActive);
+            }
+        }
+
+        try (FileWriter writer = new FileWriter(file)) {
+            for (String line : lines) {
+                writer.write(line + "\n");
+            }
+            writer.flush();
+        } catch (IOException e) {
+            System.out.println("Error updating user file: " + e.getMessage());
+        }
+
     }
 }
