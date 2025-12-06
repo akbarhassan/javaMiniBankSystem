@@ -4,12 +4,14 @@ import com.ga.bank.User.Customer;
 import com.ga.bank.User.Role;
 import com.ga.bank.User.User;
 import com.ga.bank.account.Account;
+import com.ga.bank.account.OperationType;
 import com.ga.bank.debitCards.CardType;
 import com.ga.bank.debitCards.DebitCard;
 import com.ga.bank.util.PasswordEncryptor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -17,6 +19,7 @@ import java.util.Scanner;
 public class FileDBReader {
     private final String authPath = "data/users";
     private final String accountsFolder = "data/accounts"; // adjust path to your accounts folder
+    private final String transactionsPath = "data/transactions";
 
     public boolean authLogin(String userName, String plainPassword) {
         PasswordEncryptor encryptor = new PasswordEncryptor();
@@ -188,6 +191,46 @@ public class FileDBReader {
         }
 
         return null;
+    }
+
+    public double getDailyLimit(String userName, String accountId, OperationType operationType) {
+        String filePath = transactionsPath + "/" + accountId + "-" + userName + ".txt";
+        double limit = 0d;
+
+        File transactionFile = new File(filePath);
+
+        List<String> todaysTransactions = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        try (Scanner myReader = new Scanner(transactionFile)) {
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine().trim();
+                if (data.isEmpty()) continue;
+
+                String[] transactionData = data.split(",");
+                if (transactionData.length < 6) continue;
+
+                String createdAt = transactionData[1];
+                String operation = transactionData[2];
+                if (createdAt.startsWith(today.toString()) &&
+                        operation.equalsIgnoreCase(operationType.name())
+                ) {
+                    todaysTransactions.add(data);
+                }
+            }
+
+            for (String transactionData : todaysTransactions) {
+                String[] data = transactionData.split(",");
+                limit += Double.parseDouble(data[4]);
+            }
+
+            return limit;
+
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred. " + e.getMessage());
+        }
+
+        return 0d;
     }
 
 }

@@ -6,6 +6,7 @@ import com.ga.bank.debitCards.CardType;
 import com.ga.bank.debitCards.DebitCard;
 import com.ga.bank.debitCards.Operations;
 import com.ga.bank.fileDbMods.FileDBWriter;
+import com.ga.bank.fileDbMods.FileDBReader;
 
 public class Account {
     private String accountId;
@@ -16,6 +17,7 @@ public class Account {
     private int overDraft;
     Transactions transactions;
     FileDBWriter fileDBWriter = new FileDBWriter();
+    FileDBReader fileDBReader = new FileDBReader();
 
     public Account(String accountId, double balance, boolean isActive, User user, DebitCard debitCard, int overDraft) {
         this.accountId = accountId;
@@ -84,23 +86,36 @@ public class Account {
     }
 
     public void deposit(double amount, String toAccount) {
-        //TODO: modify the transaction record or create a new 1 if not exist
-        //TODO: check if to own account
-        //TODO: check deposited from account get date etc and check if he still have limit
-        //TODO: check first to own account or no
+        double cardLimit = 0d;
+        double depositTransactionsAmount = fileDBReader.getDailyLimit(
+                user.getUserName(),
+                getAccountId(),
+                OperationType.DEPOSIT
+        );
+
+        if (toAccount == null) {
+            toAccount = getAccountId();
+        }
+
+        if (toAccount.equals(getAccountId())) {
+            cardLimit = CardLimits.getLimit(Operations.DepositLimitPerDayOwnAccount, debitCard.getCardType());
+        } else {
+            cardLimit = CardLimits.getLimit(Operations.DepositLimitPerDay, debitCard.getCardType());
+        }
+        cardLimit -= depositTransactionsAmount;
+
         if (amount < 0d) {
             System.out.println("Amount must be greater than zero");
             return;
         }
 
-        double cardLimit = CardLimits.getLimit(Operations.DepositLimitPerDayOwnAccount, debitCard.getCardType());
         if (amount >= cardLimit) {
             System.out.println("The limit is for this day, try again tomorrow");
             return;
         }
-        if (toAccount == null) {
-            toAccount = getAccountId();
-        }
+
+
+        System.out.println("card limit = " + cardLimit);
 
         setBalance(amount, toAccount);
         System.out.println("Current Balance: " + getBalance());
