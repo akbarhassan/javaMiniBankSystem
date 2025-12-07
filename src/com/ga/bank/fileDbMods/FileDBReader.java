@@ -236,7 +236,7 @@ public class FileDBReader {
     //TODO: get all current user accounts for transfer to own account
     //TODO: future work, add account type saving or not
 
-    public boolean AccountExists(String accountId){
+    public boolean AccountExists(String accountId) {
         File folder = new File(accountsFolder);
 
         if (!folder.exists() || !folder.isDirectory()) {
@@ -249,8 +249,8 @@ public class FileDBReader {
             for (File file : files) {
                 if (file.isFile()) {
                     String fileName = file.getName();
-                        if (fileName.matches("^" + accountId + "-.*")) {
-                            return true;
+                    if (fileName.matches("^" + accountId + "-.*")) {
+                        return true;
                     }
                 }
             }
@@ -259,42 +259,78 @@ public class FileDBReader {
         return false;
     }
 
-    public boolean isOwnAccount(){
+    public boolean isOwnAccount(String toAccountId, String userName) {
+        File folder = new File(accountsFolder);
+
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Accounts folder does not exist");
+            return false;
+        }
+        String expectedFileName = toAccountId + "-" + userName + ".txt";
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().equalsIgnoreCase(expectedFileName)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
-    //TODO: return list of all accounts except current user account object
-    public List<String> canTransferToAccounts(String accountId){
+    // return list of all accounts except current user account object
+    public List<String> toTransferToAccounts(String userName) {
         List<String> canTransferToAccounts = new ArrayList<>();
         File folder = new File(accountsFolder);
+
         if (!folder.exists() || !folder.isDirectory()) {
             System.out.println("Accounts folder does not exist");
             return canTransferToAccounts;
         }
-        File[] files = folder.listFiles();
 
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    String fileName = file.getName();
-                    if (fileName.toLowerCase().startsWith(accountId +"-")) {
-                        continue;
-                    }
-                    String accountNumber = fileName.split("-")[0];
-                    canTransferToAccounts.add(accountId);
-                }
+        File[] files = folder.listFiles();
+        if (files == null) return canTransferToAccounts;
+        String targetUser = userName.toLowerCase();
+        for (File file : files) {
+            if (!file.isFile()) continue;
+            String fileName = file.getName().toLowerCase();
+            if (fileName.endsWith("-" + targetUser + ".txt")) {
+                continue;
             }
+            String accountNumber = file.getName().split("-")[0];
+            canTransferToAccounts.add(accountNumber);
         }
 
         return canTransferToAccounts;
-
-
     }
 
-    public List<String> getCurrentUserTransferAccounts(){
-        List<String> currentUserAccounts = new ArrayList<>();
 
-        return currentUserAccounts;
+    public List<String> getCurrentUserOtherAccounts(String accountId, String userName) {
+        List<String> otherAccounts = new ArrayList<>();
+        File folder = new File(accountsFolder);
+
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Accounts folder does not exist");
+            return otherAccounts;
+        }
+
+        File[] files = folder.listFiles();
+        if (files == null) return otherAccounts;
+
+        for (File file : files) {
+            if (!file.isFile()) continue;
+            String fileName = file.getName().toLowerCase();
+            String user = userName.toLowerCase();
+            if (!fileName.endsWith("-" + user + ".txt")) continue;
+            String[] parts = file.getName().split("-");
+            if (parts.length < 2) continue;
+            String accNumber = parts[0];
+            if (accNumber.equals(accountId)) continue;
+            otherAccounts.add(accNumber);
+        }
+
+        return otherAccounts;
     }
 
 }

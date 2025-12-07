@@ -19,6 +19,7 @@ public class TerminalUI {
     private User currentUser;
     private Account currentAccount;
     private List<String> accountList;
+    FileDBReader fileDBReader = new FileDBReader();
 
     public void start() {
         boolean running = true;
@@ -65,14 +66,13 @@ public class TerminalUI {
         System.out.println("Enter your password");
         String plainPassword = scanner.nextLine();
 
-        FileDBReader login = new FileDBReader();
-        if (login.authLogin(userName, plainPassword)) {
+        if (fileDBReader.authLogin(userName, plainPassword)) {
             System.out.println("Login Successful");
             //todo: pick user data
-            currentUser = login.getCurrentUser(userName);
-            accountList = login.userAccounts(userName);
+            currentUser = fileDBReader.getCurrentUser(userName);
+            accountList = fileDBReader.userAccounts(userName);
             String userAccountId = setAccountId();
-            currentAccount = login.getCurrentUserAccount(userName, userAccountId, currentUser);
+            currentAccount = fileDBReader.getCurrentUserAccount(userName, userAccountId, currentUser);
 
             return true;
         } else {
@@ -170,9 +170,9 @@ public class TerminalUI {
             switch (operation) {
                 case "1":
                     System.out.println("Deposit selected");
-                    // TODO: deposit logic
                     double amount = getDeposit("Deposit");
-                    currentAccount.deposit(amount, null);
+                    String toAccountId = sendToAccount("Deposit");
+                    currentAccount.deposit(amount, toAccountId);
 
                     break;
                 case "2":
@@ -180,8 +180,6 @@ public class TerminalUI {
                     // TODO: withdraw logic
                     double amount1 = getDeposit("Withdraw");
                     currentAccount.withdraw(amount1);
-
-
                     break;
                 case "3":
                     System.out.println("Transfer selected");
@@ -254,6 +252,100 @@ public class TerminalUI {
         }
 
         return deposit;
+    }
+
+    public String sendToAccount(String operation) {
+        System.out.printf("Do you want to %s to one of your accounts, another person's account, or enter manually?\n", operation);
+        System.out.println("1. Yes (own accounts)");
+        System.out.println("2. No (other users)");
+        System.out.println("3. Enter Manual");
+
+        int choice = 0;
+
+        while (true) {
+            String input = scanner.nextLine();
+
+            try {
+                choice = Integer.parseInt(input);
+                if (choice >= 1 && choice <= 3) break;
+            } catch (NumberFormatException ignored) {
+            }
+
+            System.out.println("Invalid choice. Enter 1, 2, or 3.");
+        }
+
+
+        if (choice == 3) {
+            while (true) {
+                System.out.print("Enter the account ID manually: ");
+                String manualAcc = scanner.nextLine().trim();
+
+                if (fileDBReader.AccountExists(manualAcc)) {
+                    return manualAcc;
+                }
+                System.out.println("Account does not exist. Try again.");
+            }
+        }
+
+
+        if (choice == 1) {
+            List<String> ownUserAccounts = fileDBReader.getCurrentUserOtherAccounts(
+                    currentAccount.getAccountId(),
+                    currentUser.getUserName()
+            );
+
+            if (ownUserAccounts.isEmpty()) {
+                System.out.println("No other accounts found under your name.");
+                return null;
+            }
+
+            System.out.println("Select which of your accounts to send to:");
+            for (int i = 0; i < ownUserAccounts.size(); i++) {
+                System.out.println((i + 1) + ". Account ID: " + ownUserAccounts.get(i));
+            }
+
+            while (true) {
+                System.out.printf("Enter your choice (1-%d): ", ownUserAccounts.size());
+                String input = scanner.nextLine();
+
+                try {
+                    int accChoice = Integer.parseInt(input);
+                    if (accChoice >= 1 && accChoice <= ownUserAccounts.size()) {
+                        return ownUserAccounts.get(accChoice - 1);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+
+                System.out.println("Invalid choice. Try again.");
+            }
+        }
+
+        List<String> othersAccounts = fileDBReader.toTransferToAccounts(currentUser.getUserName());
+
+        if (othersAccounts.isEmpty()) {
+            System.out.println("No other accounts available.");
+            return null;
+        }
+
+        System.out.println("Select which account to send to:");
+        for (int i = 0; i < othersAccounts.size(); i++) {
+            System.out.println((i + 1) + ". Account ID: " + othersAccounts.get(i));
+        }
+
+        while (true) {
+            System.out.printf("Enter your choice (1-%d): ", othersAccounts.size());
+            String input = scanner.nextLine();
+
+            try {
+                int accChoice = Integer.parseInt(input);
+                if (accChoice >= 1 && accChoice <= othersAccounts.size()) {
+                    return othersAccounts.get(accChoice - 1);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+
+            System.out.println("Invalid choice. Try again.");
+        }
     }
 
 }

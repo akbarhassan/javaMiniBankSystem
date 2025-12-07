@@ -124,7 +124,7 @@ public class Account {
             toAccount = getAccountId();
         }
 
-        if (toAccount.equals(getAccountId())) {
+        if (fileDBReader.isOwnAccount(toAccount, user.getUserName())) {
             cardLimit = CardLimits.getLimit(Operations.DepositLimitPerDayOwnAccount, debitCard.getCardType());
         } else {
             cardLimit = CardLimits.getLimit(Operations.DepositLimitPerDay, debitCard.getCardType());
@@ -233,8 +233,7 @@ public class Account {
             return;
         }
 
-        //TODO: create a function that return if he is sending it to one of his accounts
-        if (toAccount.equals("test")) {
+        if (fileDBReader.isOwnAccount(toAccount, user.getUserName())) {
             cardLimit = CardLimits.getLimit(Operations.TransferLimitPerDayOwnAccount, debitCard.getCardType());
         } else {
             cardLimit = CardLimits.getLimit(Operations.TransferLimitPerDay, debitCard.getCardType());
