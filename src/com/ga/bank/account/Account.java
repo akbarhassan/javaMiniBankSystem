@@ -84,6 +84,8 @@ public class Account {
                     this,
                     toAccount,
                     postBalance);
+        } else if (operationType == OperationType.TRANSFER) {
+
         }
     }
 
@@ -165,7 +167,7 @@ public class Account {
         cardLimit -= withdrawTransactionsAmount;
 
         if (amount > cardLimit) {
-            System.out.println("The limit of withdraw is  for this day, try again tomorrow");
+            System.out.println("The limit of withdraw is hit for this day, try again tomorrow");
             return;
         }
 
@@ -195,6 +197,56 @@ public class Account {
             setActive(true);
         }
         System.out.printf("Amount Withdrawn Successfully %f", amount);
+    }
+
+    public void transfer(double amount, String toAccount) {
+        if (!isActive) {
+            System.out.println("Account is blocked overdraft reached, balance is negative");
+            return;
+        }
+
+        if (amount <= 0) {
+            System.out.println("Amount must be greater than zero");
+            return;
+        }
+
+        if (amount > getBalance()) {
+            System.out.println("Transfer amount should less than or equal the balance");
+            return;
+        }
+
+
+        double cardLimit = 0d;
+
+        double transferTransactionsAmount = fileDBReader.getDailyLimit(
+                user.getUserName(),
+                getAccountId(),
+                OperationType.TRANSFER
+        );
+
+        if (toAccount == null) {
+            toAccount = getAccountId();
+        }
+
+        if (toAccount.equals(getAccountId())) {
+            System.out.println("Transferring from this account to this account? bruh");
+            return;
+        }
+
+        //TODO: create a function that return if he is sending it to one of his accounts
+        if (toAccount.equals("test")) {
+            cardLimit = CardLimits.getLimit(Operations.TransferLimitPerDayOwnAccount, debitCard.getCardType());
+        } else {
+            cardLimit = CardLimits.getLimit(Operations.TransferLimitPerDay, debitCard.getCardType());
+        }
+        cardLimit -= transferTransactionsAmount;
+
+        if (amount > cardLimit) {
+            System.out.println("The limit of transfer is hit for this day, try again tomorrow");
+            return;
+        }
+
+        setBalance(-amount, toAccount, OperationType.TRANSFER);
     }
 
 

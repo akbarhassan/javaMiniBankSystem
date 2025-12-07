@@ -236,4 +236,65 @@ public class FileDBReader {
     //TODO: get all current user accounts for transfer to own account
     //TODO: future work, add account type saving or not
 
+    public boolean AccountExists(String accountId){
+        File folder = new File(accountsFolder);
+
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Accounts folder does not exist");
+            return false;
+        }
+
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    String fileName = file.getName();
+                        if (fileName.matches("^" + accountId + "-.*")) {
+                            return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isOwnAccount(){
+        return false;
+    }
+
+    //TODO: return list of all accounts except current user account object
+    public List<String> canTransferToAccounts(String accountId){
+        List<String> canTransferToAccounts = new ArrayList<>();
+        File folder = new File(accountsFolder);
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Accounts folder does not exist");
+            return canTransferToAccounts;
+        }
+        File[] files = folder.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    String fileName = file.getName();
+                    if (fileName.toLowerCase().startsWith(accountId +"-")) {
+                        continue;
+                    }
+                    String accountNumber = fileName.split("-")[0];
+                    canTransferToAccounts.add(accountId);
+                }
+            }
+        }
+
+        return canTransferToAccounts;
+
+
+    }
+
+    public List<String> getCurrentUserTransferAccounts(){
+        List<String> currentUserAccounts = new ArrayList<>();
+
+        return currentUserAccounts;
+    }
+
 }

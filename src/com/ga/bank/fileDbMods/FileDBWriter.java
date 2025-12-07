@@ -139,6 +139,11 @@ public class FileDBWriter {
             boolean isActive
 
     ) {
+
+        File folder = new File(accountsPath);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
         String accountId = generateAccountId(username);
 
         String userAccountFile = accountsPath + "/" + accountId + "-" + username + ".txt";
@@ -172,16 +177,28 @@ public class FileDBWriter {
 
     private String generateAccountId(String username) {
         String accountId;
-        File file;
+        boolean exists;
+        File folder = new File(folderPath);
 
         do {
-            // random 6-digit ID
             accountId = String.valueOf((int) (Math.random() * 900000) + 100000);
-            file = new File(folderPath + "/" + accountId + "-" + username + ".txt");
-        } while (file.exists());
+            exists = false;
 
+            File[] files = folder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.getName().startsWith(accountId + "-")) {
+                        exists = true;
+                        break;
+                    }
+                }
+            }
+        } while (exists);
         return accountId;
     }
+
+
+
 
     public static String generateSimpleCardNumber(String accountId) {
         StringBuilder sb = new StringBuilder();
@@ -345,4 +362,9 @@ public class FileDBWriter {
         }
 
     }
+
+    //TODO: transact amount from current account, to the other account
+
+
+    //TODO: create a function to create user accounts, with type, user accounts only 2 i assume
 }
