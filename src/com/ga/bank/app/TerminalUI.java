@@ -159,8 +159,6 @@ public class TerminalUI {
 
     public void operations() {
         boolean loggedIn = true;
-        //TODO: create User Object here?
-        //TODO: create account object here?
 
         while (loggedIn) {
             System.out.println("\n=== Available Operations ===");
@@ -177,22 +175,25 @@ public class TerminalUI {
                     break;
                 case "2":
                     System.out.println("Withdraw selected");
-                    // TODO: withdraw logic
                     double amount1 = getDeposit("Withdraw");
                     currentAccount.withdraw(amount1);
                     break;
                 case "3":
                     System.out.println("Transfer selected");
-                    // TODO: transfer logic
+                    double amount2 = getDeposit("Transfer");
+                    String toAccountId1 = sendToAccount("Transfer");
+                    currentAccount.transfer(amount2, toAccountId1);
                     break;
                 case "4":
                     System.out.println("Show current balance selected");
                     System.out.println("Current Balance: " + currentAccount.getBalance());
-                    // TODO: transfer logic
                     break;
+                case "5":
+                    createAccount();
+                    System.out.println("To use this new account logout and login again");
                 case "0":
                     System.out.println("Logging out...");
-                    loggedIn = false; // exit operations loop
+                    loggedIn = false;
                     break;
                 default:
                     System.out.println("Choose a valid operation");
@@ -206,6 +207,7 @@ public class TerminalUI {
         System.out.println("2. Withdraw");
         System.out.println("3. Transfer");
         System.out.println("4. Show current balance");
+        System.out.println("5. Create an account");
         System.out.println("0. Exit");
     }
 
@@ -259,6 +261,7 @@ public class TerminalUI {
         System.out.println("1. Yes (own accounts)");
         System.out.println("2. No (other users)");
         System.out.println("3. Enter Manual");
+        System.out.println("4. To Current Account");
 
         int choice = 0;
 
@@ -267,7 +270,7 @@ public class TerminalUI {
 
             try {
                 choice = Integer.parseInt(input);
-                if (choice >= 1 && choice <= 3) break;
+                if (choice >= 1 && choice <= 4) break;
             } catch (NumberFormatException ignored) {
             }
 
@@ -285,6 +288,10 @@ public class TerminalUI {
                 }
                 System.out.println("Account does not exist. Try again.");
             }
+        }
+
+        if (choice == 4) {
+            return currentAccount.getAccountId();
         }
 
 
@@ -346,6 +353,52 @@ public class TerminalUI {
 
             System.out.println("Invalid choice. Try again.");
         }
+    }
+
+
+    public void createAccount() {
+        System.out.println("Creating a new account.");
+        System.out.println("Select Card Type: by entering 1 or 2 or 3");
+        int i = 1;
+        for (CardType type : CardType.values()) {
+            System.out.println(i + ". " + type);
+            i++;
+        }
+        System.out.print("Your choice: ");
+        String input = scanner.nextLine();
+        if (!input.matches("[1-3]")) {
+            System.out.println("Invalid choice!");
+            return; // or ask again
+        }
+        CardType cardType = CardType.values()[Integer.parseInt(input) - 1];
+
+        System.out.println("Enter your balance");
+        String balanceInput = scanner.nextLine();
+
+        double balance;
+
+        try {
+            balance = Double.parseDouble(balanceInput);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid balance! Must be a number.");
+            return;
+        }
+
+        FileDBWriter createAccount = new FileDBWriter();
+        boolean isCreated = createAccount.writeUserAccount(
+                currentUser.getUserName(),
+                cardType,
+                balance,
+                0
+                , true
+        );
+
+        if (isCreated) {
+            System.out.println("Account created successfully!");
+        } else {
+            System.out.println("Account created, but file is not visible yet (this shouldn't happen).");
+        }
+
     }
 
 }
