@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -331,6 +332,93 @@ public class FileDBReader {
         }
 
         return otherAccounts;
+    }
+
+    public String getOwnerOfAccount(String accountId) {
+        File folder = new File(accountsFolder);
+
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Accounts folder does not exist");
+            return null;
+        }
+
+        File[] files = folder.listFiles();
+        if (files == null) return null;
+
+        for (File file : files) {
+            if (file.isFile()) {
+                String fileName = file.getName();
+
+                // Example fileName: 604290-hasan.txt
+                if (fileName.startsWith(accountId + "-") && fileName.endsWith(".txt")) {
+                    // Remove "{accountId}-" and ".txt"
+                    return fileName.substring(
+                            (accountId + "-").length(),
+                            fileName.length() - 4
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public HashMap<String, String> getToAccount(String toAccountId, String userName) {
+
+        HashMap<String, String> result = new HashMap<>();
+
+        File accountFile = new File(accountsFolder + "/" + toAccountId + "-" + userName + ".txt");
+
+        double balance = 0d;
+        boolean isActive = false;
+        int overDraft = 0;
+
+        try (Scanner myReader = new Scanner(accountFile)) {
+
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine().trim().toLowerCase();
+
+                if (data.startsWith("balance:")) {
+                    balance = Double.parseDouble(data.split(":", 2)[1]);
+
+                } else if (data.startsWith("isactive:")) {
+                    isActive = Boolean.parseBoolean(data.split(":", 2)[1]);
+
+                } else if (data.startsWith("overdraft:")) {
+                    overDraft = Integer.parseInt(data.split(":", 2)[1]);
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            System.out.println("Account file not found: " + e.getMessage());
+            return null;
+        }
+
+        result.put("balance", String.valueOf(balance));
+        result.put("isActive", String.valueOf(isActive));
+        result.put("overDraft", String.valueOf(overDraft));
+
+        return result;
+    }
+
+
+    public double getAccountBalance(String accountId, String username) {
+        String filePath = accountsFolder + "/" + accountId + "-" + username + ".txt";
+        File file = new File(filePath);
+
+        if (!file.exists()) return 0d;
+
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim().toLowerCase();
+                if (line.startsWith("balance:")) {
+                    return Double.parseDouble(line.split(":")[1]);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Could not read balance: " + e.getMessage());
+        }
+        return 0d;
     }
 
 }

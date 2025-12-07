@@ -8,4 +8,7 @@ public interface Operations {
     void withdraw(double amount, DebitCard debitCard, Account account, String toAccount, double postBalance);
 
     void overdraft(double amount, DebitCard debitCard, Account account, String toAccount, double postBalance);
+
+    void transfer(double amount, DebitCard debitCard, Account account, String toAccount, double postBalance);
+
 }

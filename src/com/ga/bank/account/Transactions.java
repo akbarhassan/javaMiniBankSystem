@@ -34,6 +34,17 @@ public class Transactions implements Operations {
         );
     }
 
+    public void transfer(double amount, DebitCard debitCard, Account account, String toAccount, double postBalance) {
+        fileDBWriter.createTransaction(
+                account.getUser().getUserName(),
+                account.getAccountId(),
+                OperationType.TRANSFER,
+                toAccount,
+                amount,
+                postBalance
+        );
+    }
+
     public void overdraft(double amount, DebitCard debitCard, Account account, String toAccount, double postBalance) {
 
     }

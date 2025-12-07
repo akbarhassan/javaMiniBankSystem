@@ -7,6 +7,8 @@ import com.ga.bank.debitCards.Operations;
 import com.ga.bank.fileDbMods.FileDBWriter;
 import com.ga.bank.fileDbMods.FileDBReader;
 
+import java.util.HashMap;
+
 public class Account {
     private String accountId;
     private double balance;
@@ -35,7 +37,6 @@ public class Account {
 
     public void setOverDraft(int overDraft) {
         if (overDraft >= 2) {
-            //TODO: deactivate the account
             setActive(false);
             fileDBWriter.modifyAccountOverDraft(
                     getAccountId(),
@@ -85,7 +86,12 @@ public class Account {
                     toAccount,
                     postBalance);
         } else if (operationType == OperationType.TRANSFER) {
-
+            transactions.transfer(
+                    amount,
+                    debitCard,
+                    this,
+                    toAccount,
+                    postBalance);
         }
     }
 
@@ -103,7 +109,7 @@ public class Account {
 
 
     public void deposit(double amount, String toAccount) {
-        if (!isActive) {
+        if (!getActive()) {
             System.out.println("Account is blocked overdraft reached, balance is negative");
             System.out.println("Contact the banker to top up until positive balance to reset");
             return;
@@ -146,7 +152,7 @@ public class Account {
     }
 
     public void withdraw(double amount) {
-        if (!isActive) {
+        if (!getActive()) {
             System.out.println("Account is blocked overdraft reached, balance is negative");
             return;
         }
@@ -200,7 +206,7 @@ public class Account {
     }
 
     public void transfer(double amount, String toAccount) {
-        if (!isActive) {
+        if (!getActive()) {
             System.out.println("Account is blocked overdraft reached, balance is negative");
             return;
         }
@@ -233,6 +239,15 @@ public class Account {
             return;
         }
 
+        if (!fileDBReader.AccountExists(toAccount)) {
+            System.out.println("Account does not exist");
+            return;
+        }
+
+        String toUserName = fileDBReader.getOwnerOfAccount(toAccount);
+        HashMap<String, String> toAccountStatus = fileDBReader.getToAccount(toAccount, toUserName);
+
+
         if (fileDBReader.isOwnAccount(toAccount, user.getUserName())) {
             cardLimit = CardLimits.getLimit(Operations.TransferLimitPerDayOwnAccount, debitCard.getCardType());
         } else {
@@ -246,6 +261,17 @@ public class Account {
         }
 
         setBalance(-amount, toAccount, OperationType.TRANSFER);
+        if (toAccountStatus.containsKey("balance")) {
+            double toAccountBalance = Double.parseDouble(toAccountStatus.get("balance"));
+            if (toAccountBalance - amount >= 0) {
+                fileDBWriter.modifyAccountOverDraft(toAccount, toUserName, 0, true);
+            }
+        }
+        if (toAccountStatus.containsKey("balance")) {
+            double toAccountBalance = Double.parseDouble(toAccountStatus.get("balance"));
+            toAccountBalance = toAccountBalance + amount;
+            fileDBWriter.modifyAccountBalance(toAccount, toUserName, toAccountBalance);
+        }
     }
 
 

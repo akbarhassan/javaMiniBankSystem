@@ -19,6 +19,7 @@ public class FileDBWriter {
     private final String folderPath = "data/users";
     private final String accountsPath = "data/accounts";
     private final String transactionsPath = "data/transactions";
+    FileDBReader fileDBReader = new FileDBReader();
 
     public FileDBWriter() {
         File folder = new File(folderPath);
@@ -198,8 +199,6 @@ public class FileDBWriter {
     }
 
 
-
-
     public static String generateSimpleCardNumber(String accountId) {
         StringBuilder sb = new StringBuilder();
 
@@ -283,48 +282,78 @@ public class FileDBWriter {
             double amount,
             double balance
     ) {
-        String filePath = transactionsPath + "/" + accountId + "-" + userName + ".txt";
+        String senderPath = transactionsPath + "/" + accountId + "-" + userName + ".txt";
+        File senderFile = new File(senderPath);
 
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String dateTime = now.format(formatter);
-
-        int id = 1;
-
-        File file = new File(filePath);
-        if (!file.exists() || !file.isFile()) {
+        if (!senderFile.exists()) {
             createTransactionsFile(userName, accountId);
         }
 
-        List<String> lines = new ArrayList<>();
-        try (Scanner scanner = new Scanner(file)) {
-            String lastNonEmptyLine = null;
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine().trim();
-                if (!line.isEmpty()) {
-                    lastNonEmptyLine = line;
-                }
-            }
-            if (lastNonEmptyLine != null) {
-                String[] parts = lastNonEmptyLine.split(",", 2); // ID is the first part
-                try {
-                    id = Integer.parseInt(parts[0].trim()) + 1;
-                } catch (NumberFormatException e) {
-                    id++;
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found: " + e.getMessage());
+        String dateTime = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        // ---- SENDER RECORD ----
+        int senderId = getNextTransactionId(senderFile);
+
+        String senderRecord = senderId + "," + dateTime + "," + operation + "," +
+                toAccountId + "," + amount + "," + balance;
+
+        appendToFile(senderFile, senderRecord);
+
+        // ---- STOP if same account ----
+        if (accountId.equals(toAccountId)) return;
+
+        // ---- RECEIVER RECORD ----
+        String toUserName = fileDBReader.getOwnerOfAccount(toAccountId);
+
+        if (toUserName == null) {
+            System.out.println("Receiver account not found.");
             return;
         }
-        String record = id + "," + dateTime + "," + operation + "," + toAccountId + "," + amount + "," + balance;
-        try (FileWriter writer = new FileWriter(file, true)) { // append mode
-            writer.write(record + "\n");
-            writer.flush();
-        } catch (IOException e) {
-            System.out.println("Error writing transaction: " + e.getMessage());
+
+        String receiverPath = transactionsPath + "/" + toAccountId + "-" + toUserName + ".txt";
+        File receiverFile = new File(receiverPath);
+
+        if (!receiverFile.exists()) {
+            createTransactionsFile(toUserName, toAccountId);
+        }
+
+        int receiverId = getNextTransactionId(receiverFile);
+        double toPostBalance = fileDBReader.getAccountBalance(toAccountId, toUserName);
+
+        String receiverRecord = receiverId + "," + dateTime + "," +
+                OperationType.INCOMING + "," + accountId + "," +
+                amount + "," + toPostBalance;
+
+        appendToFile(receiverFile, receiverRecord);
+    }
+
+    private int getNextTransactionId(File file) {
+        int id = 1;
+
+        try (Scanner sc = new Scanner(file)) {
+            String last = null;
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine().trim();
+                if (!line.isEmpty()) last = line;
+            }
+            if (last != null) {
+                id = Integer.parseInt(last.split(",")[0].trim()) + 1;
+            }
+        } catch (Exception ignored) {
+        }
+
+        return id;
+    }
+
+    private void appendToFile(File file, String line) {
+        try (FileWriter writer = new FileWriter(file, true)) {
+            writer.write(line + "\n");
+        } catch (IOException ex) {
+            System.out.println("Error writing transaction: " + ex.getMessage());
         }
     }
+
 
     public void modifyAccountOverDraft(String accountId, String username, int overdraft, boolean isActive) {
         String userAccountFile = accountsPath + "/" + accountId + "-" + username + ".txt";
@@ -362,8 +391,6 @@ public class FileDBWriter {
         }
 
     }
-
-    //TODO: transact amount from current account, to the other account
 
 
     //TODO: create a function to create user accounts, with type, user accounts only 2 i assume
