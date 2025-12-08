@@ -1,5 +1,6 @@
 package com.ga.bank.fileDbMods;
 
+import com.ga.bank.User.Banker;
 import com.ga.bank.User.Customer;
 import com.ga.bank.User.Role;
 import com.ga.bank.User.User;
@@ -103,6 +104,14 @@ public class FileDBReader {
                             password
                     );
                     return customer;
+                } else if(roleEnum == Role.BANKER){
+                    Banker banker = new Banker(
+                            userName,
+                            fullName,
+                            email,
+                            password
+                    );
+                    return banker;
                 }
             }
         } catch (FileNotFoundException e) {
@@ -419,6 +428,15 @@ public class FileDBReader {
             System.out.println("Could not read balance: " + e.getMessage());
         }
         return 0d;
+    }
+
+
+    public boolean userExists(String username){
+        String usersPath = authPath + "/"+ username + ".txt";
+
+        File file = new File(usersPath);
+
+        return file.isFile() && file.exists();
     }
 
 }

@@ -17,9 +17,4 @@ public class Banker extends User {
     public void listUserTransactions(String accountId) {
     }
 
-
-    public void createBankerAccount() {
-    }
-
-
 }

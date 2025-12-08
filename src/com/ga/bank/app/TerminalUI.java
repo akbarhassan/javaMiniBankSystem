@@ -1,5 +1,6 @@
 package com.ga.bank.app;
 
+import com.ga.bank.User.Banker;
 import com.ga.bank.User.Customer;
 import com.ga.bank.User.User;
 import com.ga.bank.account.Account;
@@ -34,6 +35,10 @@ public class TerminalUI {
                     if (login()) {
                         if (currentUser instanceof Customer) {
                             operations();
+                        } else {
+                            if (currentUser instanceof Banker) {
+                                bankerOperations();
+                            }
                         }
                     }
                     break;
@@ -68,12 +73,12 @@ public class TerminalUI {
 
         if (fileDBReader.authLogin(userName, plainPassword)) {
             System.out.println("Login Successful");
-            //todo: pick user data
             currentUser = fileDBReader.getCurrentUser(userName);
-            accountList = fileDBReader.userAccounts(userName);
-            String userAccountId = setAccountId();
-            currentAccount = fileDBReader.getCurrentUserAccount(userName, userAccountId, currentUser);
-
+            if (currentUser instanceof Customer) {
+                accountList = fileDBReader.userAccounts(userName);
+                String userAccountId = setAccountId();
+                currentAccount = fileDBReader.getCurrentUserAccount(userName, userAccountId, currentUser);
+            }
             return true;
         } else {
             System.out.println("Invalid credentials");
@@ -400,5 +405,76 @@ public class TerminalUI {
         }
 
     }
+
+    public void bankerOperationsTemplate() {
+        System.out.println("Select operations");
+        System.out.println("1. List customer details");
+        System.out.println("2. List customer account details");
+        System.out.println("3. Create Banker");
+        System.out.println("4. List customer transaction details");
+        System.out.println("5. Activate customer account");
+        System.out.println("6. Deactivate customer account");
+        System.out.println("7. Exit");
+
+    }
+
+    public void bankerOperations() {
+        boolean loggedIn = true;
+
+        while (loggedIn) {
+            System.out.println("\n=== Available Operations ===");
+            bankerOperationsTemplate();
+            String operation = scanner.nextLine();
+
+            switch (operation) {
+                case "1":
+                    System.out.println("Listing user details selected");
+                    enterCustomerUserName();                    break;
+                case "2":
+                    System.out.println("Listing customer account details");
+                    break;
+                case "3":
+                    System.out.println("To create banker account fill the following");
+                    break;
+                case "4":
+                    System.out.println("List customer transactions");
+                    break;
+                case "5":
+                    System.out.println("Enter Customer account to activate");
+                    break;
+                case "6":
+                    System.out.println("Enter Customer account to deactivate");
+                    break;
+                case "7":
+                    System.out.println("Exiting Have fun !");
+                    loggedIn=false;
+                    break;
+                default:
+                    System.out.println("Choose a valid operation");
+
+            }
+        }
+
+    }
+
+
+    public void enterCustomerUserName() {
+        System.out.println("Write the user name of the customer:");
+
+        while (true) {
+            String input = scanner.nextLine();
+
+            if (!fileDBReader.userExists(input)) {
+                System.out.println("User does not exist");
+            } else {
+                User user = fileDBReader.getCurrentUser(input);
+                System.out.println("Full Name : " + user.getFullName());
+                System.out.println("Email     : " + user.getEmail());
+                System.out.println("Role      : " + user.getRole());
+                return; // exit method
+            }
+        }
+    }
+
 
 }
