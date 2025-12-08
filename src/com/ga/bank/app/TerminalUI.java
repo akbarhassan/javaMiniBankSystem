@@ -11,6 +11,8 @@ import com.ga.bank.debitCards.CardType;
 
 import com.ga.bank.User.Role;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.*;
 import java.util.Scanner;
@@ -102,6 +104,7 @@ public class TerminalUI {
         boolean verifiedEmail = email != null && pattern.matcher(email).matches();
 
         if (!verifiedEmail) {
+            System.out.println("Invalid email");
             return;
         }
 
@@ -145,13 +148,7 @@ public class TerminalUI {
         FileDBWriter authRegister = new FileDBWriter();
         boolean fileIsCreated = authRegister.writeUserCredentials(userName, fullName, email, hashedPassword, String.valueOf(Role.CUSTOMER), false);
         if (fileIsCreated) {
-            boolean createAccount = authRegister.writeUserAccount(
-                    userName,
-                    cardType,
-                    balance,
-                    0
-                    , true
-            );
+            boolean createAccount = authRegister.writeUserAccount(userName, cardType, balance, 0, true);
 
             // Confirm immediately
             if (createAccount) {
@@ -196,6 +193,9 @@ public class TerminalUI {
                 case "5":
                     createAccount();
                     System.out.println("To use this new account logout and login again");
+                case "6":
+                    transactionFilters(currentAccount);
+                    break;
                 case "0":
                     System.out.println("Logging out...");
                     loggedIn = false;
@@ -213,6 +213,7 @@ public class TerminalUI {
         System.out.println("3. Transfer");
         System.out.println("4. Show current balance");
         System.out.println("5. Create an account");
+        System.out.println("6. Show Transaction filters");
         System.out.println("0. Exit");
     }
 
@@ -301,10 +302,7 @@ public class TerminalUI {
 
 
         if (choice == 1) {
-            List<String> ownUserAccounts = fileDBReader.getCurrentUserOtherAccounts(
-                    currentAccount.getAccountId(),
-                    currentUser.getUserName()
-            );
+            List<String> ownUserAccounts = fileDBReader.getCurrentUserOtherAccounts(currentAccount.getAccountId(), currentUser.getUserName());
 
             if (ownUserAccounts.isEmpty()) {
                 System.out.println("No other accounts found under your name.");
@@ -390,13 +388,7 @@ public class TerminalUI {
         }
 
         FileDBWriter createAccount = new FileDBWriter();
-        boolean isCreated = createAccount.writeUserAccount(
-                currentUser.getUserName(),
-                cardType,
-                balance,
-                0
-                , true
-        );
+        boolean isCreated = createAccount.writeUserAccount(currentUser.getUserName(), cardType, balance, 0, true);
 
         if (isCreated) {
             System.out.println("Account created successfully!");
@@ -429,25 +421,31 @@ public class TerminalUI {
             switch (operation) {
                 case "1":
                     System.out.println("Listing user details selected");
-                    enterCustomerUserName();                    break;
+                    enterCustomerUserName();
+                    break;
                 case "2":
                     System.out.println("Listing customer account details");
+                    getUserAccountsDetails();
                     break;
                 case "3":
                     System.out.println("To create banker account fill the following");
+                    createBankerAccount();
                     break;
                 case "4":
                     System.out.println("List customer transactions");
+                    transactionBankerFilters();
                     break;
                 case "5":
                     System.out.println("Enter Customer account to activate");
+                    setAccountActive();
                     break;
                 case "6":
                     System.out.println("Enter Customer account to deactivate");
+                    setAccountInActive();
                     break;
                 case "7":
                     System.out.println("Exiting Have fun !");
-                    loggedIn=false;
+                    loggedIn = false;
                     break;
                 default:
                     System.out.println("Choose a valid operation");
@@ -467,13 +465,469 @@ public class TerminalUI {
             if (!fileDBReader.userExists(input)) {
                 System.out.println("User does not exist");
             } else {
-                User user = fileDBReader.getCurrentUser(input);
-                System.out.println("Full Name : " + user.getFullName());
-                System.out.println("Email     : " + user.getEmail());
-                System.out.println("Role      : " + user.getRole());
-                return; // exit method
+                Banker banker = (Banker) currentUser;
+                banker.viewUserDetails(input);
+                return;
             }
         }
+    }
+
+    public void getUserAccountsDetails() {
+        System.out.println("Write the user name to list his accounts and get details of them");
+
+        while (true) {
+            String userName = scanner.nextLine();
+
+            if (!fileDBReader.userExists(userName)) {
+                System.out.println("User does not exist");
+                continue;
+            }
+
+            while (true) {
+                System.out.println("Select User Account for details (or type 0 to exit)");
+
+                List<String> userAccounts = fileDBReader.userAccounts(userName);
+
+                for (int i = 0; i < userAccounts.size(); i++) {
+                    System.out.printf("%d. %s\n", i + 1, userAccounts.get(i));
+                }
+
+                System.out.println("0. Exit");
+
+                String input = scanner.nextLine();
+
+                int choice;
+
+                try {
+                    choice = Integer.parseInt(input);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input");
+                    continue;
+                }
+
+                if (choice == 0) {
+                    return;
+                }
+
+                if (choice < 1 || choice > userAccounts.size()) {
+                    System.out.println("Invalid choice!");
+                    continue;
+                }
+
+                String accountId = userAccounts.get(choice - 1);
+                HashMap<String, String> accountDetails = fileDBReader.getToAccount(accountId, userName);
+
+                System.out.println("Selected account details for " + userName);
+                for (String key : accountDetails.keySet()) {
+                    System.out.println(key + ": " + accountDetails.get(key));
+                }
+
+                System.out.println("\nPress ENTER to select another account or type 'exit' to quit.");
+                String exitInput = scanner.nextLine();
+                if (exitInput.equalsIgnoreCase("exit")) {
+                    return;
+                }
+            }
+        }
+    }
+
+    public void setAccountActive() {
+        if (!(currentUser instanceof Banker)) {
+            System.out.println("Only bankers can activate accounts!");
+            return;
+        }
+
+        Banker banker = (Banker) currentUser;
+
+        System.out.println("Write the username to list his accounts:");
+
+        while (true) {
+            String userName = scanner.nextLine();
+
+            if (!fileDBReader.userExists(userName)) {
+                System.out.println("User does not exist");
+                continue;
+            }
+
+            while (true) {
+                System.out.println("Select User Account to ACTIVATE (or 0 to exit):");
+
+                List<String> userAccounts = fileDBReader.userAccounts(userName);
+
+                for (int i = 0; i < userAccounts.size(); i++) {
+                    System.out.printf("%d. %s\n", i + 1, userAccounts.get(i));
+                }
+                System.out.println("0. Exit");
+
+                int choice;
+                try {
+                    choice = Integer.parseInt(scanner.nextLine());
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input");
+                    continue;
+                }
+
+                if (choice == 0) return;
+                if (choice < 1 || choice > userAccounts.size()) {
+                    System.out.println("Invalid choice!");
+                    continue;
+                }
+
+                String accountId = userAccounts.get(choice - 1);
+
+                banker.activateAccount(accountId, userName);
+
+                System.out.println("Account " + accountId + " activated!");
+
+                System.out.println("\nPress ENTER to select another account or type 'exit' to quit.");
+                String exitInput = scanner.nextLine();
+                if (exitInput.equalsIgnoreCase("exit")) return;
+            }
+        }
+    }
+
+
+    public void setAccountInActive() {
+        if (!(currentUser instanceof Banker)) {
+            System.out.println("Only bankers can activate accounts!");
+            return;
+        }
+
+        Banker banker = (Banker) currentUser;
+
+        System.out.println("Write the username to list his accounts:");
+
+        while (true) {
+            String userName = scanner.nextLine();
+
+            if (!fileDBReader.userExists(userName)) {
+                System.out.println("User does not exist");
+                continue;
+            }
+
+            while (true) {
+                System.out.println("Select User Account to ACTIVATE (or 0 to exit):");
+
+                List<String> userAccounts = fileDBReader.userAccounts(userName);
+
+                for (int i = 0; i < userAccounts.size(); i++) {
+                    System.out.printf("%d. %s\n", i + 1, userAccounts.get(i));
+                }
+                System.out.println("0. Exit");
+
+                int choice;
+                try {
+                    choice = Integer.parseInt(scanner.nextLine());
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input");
+                    continue;
+                }
+
+                if (choice == 0) return;
+                if (choice < 1 || choice > userAccounts.size()) {
+                    System.out.println("Invalid choice!");
+                    continue;
+                }
+
+                String accountId = userAccounts.get(choice - 1);
+
+                banker.deActivateAccount(accountId, userName);
+
+                System.out.println("Account " + accountId + " de activated!");
+
+                System.out.println("\nPress ENTER to select another account or type 'exit' to quit.");
+                String exitInput = scanner.nextLine();
+                if (exitInput.equalsIgnoreCase("exit")) return;
+            }
+        }
+    }
+
+
+    public void createBankerAccount() {
+        if (!(currentUser instanceof Banker)) {
+            System.out.println("Only bankers can activate accounts!");
+            return;
+        }
+        System.out.println("Creating a new banker account...");
+
+        System.out.println("Enter a username");
+        String userName = scanner.nextLine();
+
+        System.out.println("Enter banker full name");
+        String fullName = scanner.nextLine();
+
+        System.out.println("Enter banker email");
+        String email = scanner.nextLine();
+
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        boolean verifiedEmail = email != null && pattern.matcher(email).matches();
+
+        if (!verifiedEmail) {
+            System.out.println("Invalid email");
+            return;
+        }
+
+        System.out.println("Enter your password");
+        String plainPassword = scanner.nextLine();
+
+        PasswordEncryptor encryptor = new PasswordEncryptor();
+        String hashedPassword;
+        try {
+            hashedPassword = encryptor.encrypt(plainPassword);
+        } catch (Exception e) {
+            System.out.println("Error encrypting password: " + e.getMessage());
+            return;
+        }
+
+        Banker banker = (Banker) currentUser;
+        banker.createBankerAccount(userName, fullName, email, hashedPassword);
+    }
+
+
+    public void transactionBankerFilters() {
+
+        if (!(currentUser instanceof Banker)) {
+            System.out.println("Only bankers can view filtered transactions!");
+            return;
+        }
+
+        Banker banker = (Banker) currentUser;
+
+        System.out.println("Write the username to list his accounts:");
+
+        while (true) {
+            String userName = scanner.nextLine();
+
+            if (!fileDBReader.userExists(userName)) {
+                System.out.println("User does not exist. Try again:");
+                continue;
+            }
+
+            while (true) {
+                System.out.println("Select User Account to view transactions (or 0 to exit):");
+
+                List<String> userAccounts = fileDBReader.userAccounts(userName);
+
+                for (int i = 0; i < userAccounts.size(); i++) {
+                    System.out.printf("%d. %s\n", i + 1, userAccounts.get(i));
+                }
+                System.out.println("0. Exit");
+
+                int choice;
+                try {
+                    choice = Integer.parseInt(scanner.nextLine());
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Try again.");
+                    continue;
+                }
+
+                if (choice == 0) return;
+                if (choice < 1 || choice > userAccounts.size()) {
+                    System.out.println("Invalid choice! Try again.");
+                    continue;
+                }
+
+                String accountId = userAccounts.get(choice - 1);
+
+                // ----- Select date range -----
+                System.out.println("Select date range:");
+                System.out.println("1. Today");
+                System.out.println("2. Last 7 days");
+                System.out.println("3. Last 30 days");
+                System.out.print("Choice: ");
+
+                int dateChoice;
+                try {
+                    dateChoice = Integer.parseInt(scanner.nextLine());
+                } catch (Exception e) {
+                    System.out.println("Invalid number");
+                    continue;
+                }
+
+                LocalDateTime from = LocalDateTime.now();
+
+                switch (dateChoice) {
+                    case 1:
+                        from = from.toLocalDate().atStartOfDay();
+                        break;
+                    case 2:
+                        from = from.minusDays(7);
+                        break;
+                    case 3:
+                        from = from.minusDays(30);
+                        break;
+                    default:
+                        System.out.println("Invalid date option.");
+                        continue;
+                }
+
+                // ----- Select transaction type by number -----
+                System.out.println("Select transaction type:");
+                System.out.println("1. DEPOSIT");
+                System.out.println("2. WITHDRAW");
+                System.out.println("3. TRANSFER");
+                System.out.println("4. OVERDRAFT");
+                System.out.println("5. INCOMING");
+                System.out.println("6. ALL");
+                System.out.print("Choice: ");
+
+                int typeChoiceNum;
+                try {
+                    typeChoiceNum = Integer.parseInt(scanner.nextLine());
+                } catch (Exception e) {
+                    System.out.println("Invalid number");
+                    continue;
+                }
+
+                String typeChoice;
+                switch (typeChoiceNum) {
+                    case 1:
+                        typeChoice = "DEPOSIT";
+                        break;
+                    case 2:
+                        typeChoice = "WITHDRAW";
+                        break;
+                    case 3:
+                        typeChoice = "TRANSFER";
+                        break;
+                    case 4:
+                        typeChoice = "OVERDRAFT";
+                        break;
+                    case 5:
+                        typeChoice = "INCOMING";
+                        break;
+                    case 6:
+                        typeChoice = "ALL";
+                        break;
+                    default:
+                        System.out.println("Invalid type selection!");
+                        continue;
+                }
+
+                // ----- Fetch filtered transactions -----
+                List<String[]> result = fileDBReader.getFilteredTransactions(
+                        accountId,
+                        userName,
+                        from,
+                        typeChoice
+                );
+
+                // ----- Print formatted table -----
+                printTransactionTable(result);
+
+                System.out.println("\nPress ENTER to view another account or type 'exit' to quit.");
+                String exit = scanner.nextLine();
+                if (exit.equalsIgnoreCase("exit")) return;
+            }
+        }
+    }
+
+
+    public void transactionFilters(Account currentAccount) {
+
+        String accountId = currentAccount.getAccountId();
+        String userName = currentAccount.getUser().getUserName();
+
+        // ----- Select date range -----
+        System.out.println("Select date range:");
+        System.out.println("1. Today");
+        System.out.println("2. Last 7 days");
+        System.out.println("3. Last 30 days");
+        System.out.print("Choice: ");
+
+        int dateChoice = Integer.parseInt(scanner.nextLine());
+        LocalDateTime from = LocalDateTime.now();
+
+        switch (dateChoice) {
+            case 1:
+                from = from.toLocalDate().atStartOfDay();
+                break;
+            case 2:
+                from = from.minusDays(7);
+                break;
+            case 3:
+                from = from.minusDays(30);
+                break;
+            default:
+                System.out.println("Invalid date range!");
+                return;
+        }
+
+        // ----- Select transaction type -----
+        System.out.println("Select transaction type:");
+        System.out.println("1. DEPOSIT");
+        System.out.println("2. WITHDRAW");
+        System.out.println("3. TRANSFER");
+        System.out.println("4. OVERDRAFT");
+        System.out.println("5. INCOMING");
+        System.out.println("6. ALL");
+        System.out.print("Choice: ");
+
+        int typeChoiceNum;
+        try {
+            typeChoiceNum = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number!");
+            return;
+        }
+
+        String typeChoice;
+
+        switch (typeChoiceNum) {
+            case 1:
+                typeChoice = "DEPOSIT";
+                break;
+            case 2:
+                typeChoice = "WITHDRAW";
+                break;
+            case 3:
+                typeChoice = "TRANSFER";
+                break;
+            case 4:
+                typeChoice = "OVERDRAFT";
+                break;
+            case 5:
+                typeChoice = "INCOMING";
+                break;
+            case 6:
+                typeChoice = "ALL";
+                break;
+            default:
+                System.out.println("Invalid type selection!");
+                return;
+        }
+
+        List<String[]> result = fileDBReader.getFilteredTransactions(
+                accountId,
+                userName,
+                from,
+                typeChoice
+        );
+
+        printTransactionTable(result);
+    }
+
+
+    private void printTransactionTable(List<String[]> rows) {
+
+        System.out.println("\n+----+---------------------+------------+-----------+----------+-------------+");
+        System.out.printf("| %-2s | %-19s | %-10s | %-9s | %-8s | %-11s |\n",
+                "ID", "Date & Time", "Type", "To/From", "Amount", "Balance");
+        System.out.println("+----+---------------------+------------+-----------+----------+-------------+");
+
+        if (rows.isEmpty()) {
+            System.out.println("| No matching transactions found.                                          |");
+            System.out.println("+----+---------------------+------------+-----------+----------+-------------+");
+            return;
+        }
+
+        for (String[] p : rows) {
+            System.out.printf("| %-2s | %-19s | %-10s | %-9s | %-8s | %-11s |\n",
+                    p[0], p[1], p[2], p[3], p[4], p[5]);
+        }
+
+        System.out.println("+----+---------------------+------------+-----------+----------+-------------+");
     }
 
 

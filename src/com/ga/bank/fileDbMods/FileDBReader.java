@@ -13,6 +13,8 @@ import com.ga.bank.util.PasswordEncryptor;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +106,7 @@ public class FileDBReader {
                             password
                     );
                     return customer;
-                } else if(roleEnum == Role.BANKER){
+                } else if (roleEnum == Role.BANKER) {
                     Banker banker = new Banker(
                             userName,
                             fullName,
@@ -242,9 +244,7 @@ public class FileDBReader {
 
         return 0d;
     }
-    //TODO: get all users accounts except current user accounts for transfer
-    //TODO: get all current user accounts for transfer to own account
-    //TODO: future work, add account type saving or not
+
 
     public boolean AccountExists(String accountId) {
         File folder = new File(accountsFolder);
@@ -381,7 +381,7 @@ public class FileDBReader {
         double balance = 0d;
         boolean isActive = false;
         int overDraft = 0;
-
+        String cardType = "";
         try (Scanner myReader = new Scanner(accountFile)) {
 
             while (myReader.hasNextLine()) {
@@ -395,6 +395,9 @@ public class FileDBReader {
 
                 } else if (data.startsWith("overdraft:")) {
                     overDraft = Integer.parseInt(data.split(":", 2)[1]);
+
+                } else if (data.startsWith("cardtype:")) {
+                    cardType = data.split(":", 2)[1];
                 }
             }
 
@@ -406,6 +409,7 @@ public class FileDBReader {
         result.put("balance", String.valueOf(balance));
         result.put("isActive", String.valueOf(isActive));
         result.put("overDraft", String.valueOf(overDraft));
+        result.put("cardType", cardType);
 
         return result;
     }
@@ -431,12 +435,49 @@ public class FileDBReader {
     }
 
 
-    public boolean userExists(String username){
-        String usersPath = authPath + "/"+ username + ".txt";
+    public boolean userExists(String username) {
+        String usersPath = authPath + "/" + username + ".txt";
 
         File file = new File(usersPath);
 
         return file.isFile() && file.exists();
     }
+
+
+    public List<String[]> getFilteredTransactions(
+            String accountId,
+            String userName,
+            LocalDateTime fromDate,
+            String typeFilter   // "ALL", "TRANSFER", "WITHDRAW", etc
+    ) {
+        List<String[]> result = new ArrayList<>();
+        File file = new File(transactionsPath + "/" + accountId + "-" + userName + ".txt");
+
+        if (!file.exists()) return result;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        try (Scanner sc = new Scanner(file)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                String[] p = line.split(",");
+
+                LocalDateTime date = LocalDateTime.parse(p[1], formatter);
+                String type = p[2];
+
+                // date filter
+                if (date.isBefore(fromDate)) continue;
+
+                // type filter
+                if (!typeFilter.equals("ALL") && !type.equalsIgnoreCase(typeFilter)) continue;
+
+                result.add(p);
+            }
+        } catch (Exception ignored) {
+        }
+
+        return result;
+    }
+
 
 }
