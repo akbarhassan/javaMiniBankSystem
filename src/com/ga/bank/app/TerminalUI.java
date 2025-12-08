@@ -913,7 +913,7 @@ public class TerminalUI {
 
         System.out.println("\n+----+---------------------+------------+-----------+----------+-------------+");
         System.out.printf("| %-2s | %-19s | %-10s | %-9s | %-8s | %-11s |\n",
-                "ID", "Date & Time", "Type", "To/From", "Amount", "Balance");
+                "ID", "Date & Time", "Type", "To/From", "Amount", "Post Balance (before doing op)");
         System.out.println("+----+---------------------+------------+-----------+----------+-------------+");
 
         if (rows.isEmpty()) {
