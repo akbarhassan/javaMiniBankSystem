@@ -1,0 +1,17 @@
+Login:
+As a user, i should be able to login via cli, using email and password
+as a user, i should be able to list the action on the login
+On login user should be able to call (for example [help]) and show him what he can do based on his role
+as a user, i should be able to logout
+
+Banker&Customer:
+As A banker , I should be able to create banker accounts, by entering his details
+as a customer , i should be able to register a password the account
+As a customer, I want the system to require strong passwords so my account stays secure.
+
+Account:
+As a user, i should be able to withdraw money from my account
+as a user i should be able to view all my transactions
+as a user i should be able to deposit to my account
+as a user i should be able to transfer money to another user account
+as a user i should be able to view my account savings
