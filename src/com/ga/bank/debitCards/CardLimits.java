@@ -16,6 +16,13 @@ public class CardLimits {
         withdrawLimits.put(CardType.MASTERCARD, 5_000d);
         limits.put(Operations.WithdrawLimitPerDay, withdrawLimits);
 
+        //noraml transfer
+        Map<CardType, Double> transferLimits = new HashMap<>();
+        transferLimits.put(CardType.PLATINUM, 40_000d);
+        transferLimits.put(CardType.TITANIUM, 20_000d);
+        transferLimits.put(CardType.MASTERCARD, 10_000d);
+        limits.put(Operations.TransferLimitPerDay, transferLimits);
+
         // TransferLimitPerDayOwnAccount
         Map<CardType, Double> transferOwnLimits = new HashMap<>();
         transferOwnLimits.put(CardType.PLATINUM, 80_000d);

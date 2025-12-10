@@ -193,6 +193,7 @@ public class TerminalUI {
                 case "5":
                     createAccount();
                     System.out.println("To use this new account logout and login again");
+                    break;
                 case "6":
                     transactionFilters(currentAccount);
                     break;
